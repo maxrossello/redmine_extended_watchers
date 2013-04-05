@@ -26,7 +26,7 @@ Redmine::Plugin.register :redmine_extended_watchers do
   author 'Massimo Rossello'
   description 'Allows users that can view at least own and assigned issues in a project to be notified of some issue if set as watchers (making patch #8488 a plugin)'
   version '0.0.1'
-  url 'git@bitbucket.org:maxrossello/redmine_extended_watchers'
-  author_url 'https://bitbucket.org/maxrossello'
+  url 'https://github.com/maxrossello/redmine_extended_watchers.git'
+  author_url 'https://github.com/maxrossello'
   requires_redmine :version_or_higher => '1.4.0'
 end
