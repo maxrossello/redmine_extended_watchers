@@ -1,5 +1,7 @@
 = extended_watchers
 
+Tested with redmine 1.4.x
+
 This plugin allows users that can view at least own and assigned issues in a project to be notified of some issue if set as watchers, making patch #8488 a plugin.
 
 Currently even non member users could be added as watchers, but a notification won't be sent to them. This is very confusing.
