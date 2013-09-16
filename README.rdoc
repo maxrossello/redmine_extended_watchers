@@ -9,3 +9,5 @@ In plain Redmine even non member users could be added as watchers, but a notific
 This plugin mitigates the problem while keeping control. Users may be assigned 'view own or assigned issues' permission only, and still be notified and gain visibility when watching some other issue.
 Conversely, users that are not known by the project cannot be added as watchers.
 
+Look on the master branch if you want to be able to add any user as a watcher, irrespective of the 'view own or assigned issues' permission.
+
