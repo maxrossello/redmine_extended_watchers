@@ -6,20 +6,19 @@ module ExtendedWatchersControllerPatch
         base.send(:include, InstanceMethods)
         base.class_eval do
             unloadable
-
-            alias_method_chain :autocomplete_for_user, :extwatch
         end
     end
 
     module InstanceMethods
 
-        def autocomplete_for_user_with_extwatch
-          @users = User.active.sorted.like(params[:q]).limit(100).all
-          @users.reject! {|user| !user.allowed_to?(:view_issues, @project)}
-          if @watched
-            @users -= @watched.watcher_users
+        def check_project_privacy
+          if (params[:action] == 'unwatch') && (params[:object_type] == 'issue')
+            if User.current.logged?
+              issue = Issue.find(params[:object_id])
+              return issue.watched_by?(User.current)
+            end
           end
-          render :layout => false
+          super()
         end
 
     end

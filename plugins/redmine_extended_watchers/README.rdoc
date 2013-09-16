@@ -1,11 +1,13 @@
 = extended_watchers
 
-Tested with redmine 2.3.x, compatible with 2.1.x, 2.2.x
+Tested with redmine 2.3.2, compatible with 2.1.x, 2.2.x, 2.3.x
 
-This plugin allows users that can view at least own and assigned issues in a project to be notified of some issue if set as watchers, making patch #8488 a plugin.
+In plain Redmine currently non member users could be added as watchers, but a notification won't be sent to them. This is very confusing.
 
-In plain Redmine even non member users could be added as watchers, but a notification won't be sent to them. This is very confusing.
+This plugin allows to add any user in the system as a watcher of some issue. 
+The system behaviour for the watcher user will be similar to that of 'view assigned issues' permission, except that the whole project gets hidden back if the last issue is unwatched (unless other permissions are given).
 
-This plugin mitigates the problem while keeping control. Users may be assigned 'view own or assigned issues' permission only, and still be notified and gain visibility when watching some other issue.
-Conversely, users that are not known by the project cannot be added as watchers.
+If only watching an issue in a project, all other project modules will be hidden. The project overview is redirected to the issues view, showing just the watched issue(s).
+
+If you wish to be able to set as watchers only users that have some issue permission in the project (i.e. 'view own or assigned issues') then use the branch 'with_view_own'.
 
