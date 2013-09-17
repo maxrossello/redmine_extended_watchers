@@ -13,13 +13,11 @@ module ExtendedWatchersUserPatch
 
   module InstanceMethods
     def allowed_to_with_extwatch?(action, context, options={}, &block)
-      if self.logged? && context && context.is_a?(Project)
-        if action.is_a?(Hash)
-          if action[:controller] == "issues" && action[:action] == "index"
-            Issue.watched_by(self).all.each do |issue|
-              return true if issue.project == context
-            end
-          end
+      if self.logged? && context && context.is_a?(Project) && action.is_a?(Hash) &&
+          (action[:controller] == "issues" && action[:action] == "index")
+        
+        Issue.watched_by(self).all.each do |issue|
+          return true if issue.project == context
         end
       end
       allowed_to_without_extwatch?(action, context, options, &block)
