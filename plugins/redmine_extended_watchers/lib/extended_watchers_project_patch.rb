@@ -9,7 +9,13 @@ module ExtendedWatchersProjectPatch
   def self.included(base)
     base.instance_eval do
       def visible_condition(user, options={})
-        visible_condition_old(user,options) + " OR #{Project.table_name}.id IN (#{Issue.visible.watched_by(user).all.collect(&:project_id).join(",")})"
+        issues = Issue.visible.watched_by(user)
+
+        if issues.any?
+          visible_condition_old(user,options) + " OR #{Project.table_name}.id IN (#{issues.all.collect(&:project_id).join(",")})"
+        else
+          visible_condition_old(user,options)
+        end
       end
     end
 
