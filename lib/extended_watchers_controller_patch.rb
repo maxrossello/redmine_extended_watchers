@@ -12,11 +12,8 @@ module ExtendedWatchersControllerPatch
     module InstanceMethods
 
         def check_project_privacy
-          if (params[:action] == 'unwatch') && (params[:object_type] == 'issue')
-            if User.current.logged?
-              issue = Issue.find(params[:object_id])
-              return issue.watched_by?(User.current)
-            end
+          if User.current.logged? && (params[:action] == 'unwatch') && (params[:object_type] == 'issue')
+            return Issue.find(params[:object_id]).watched_by?(User.current)
           end
           super()
         end
