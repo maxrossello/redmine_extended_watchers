@@ -2,7 +2,7 @@
 
 Tested with redmine 2.3.2, compatible with 2.1.x, 2.2.x, 2.3.x
 
-In plain Redmine currently non member users could be added as watchers, but a notification won't be sent to them. This is very confusing.
+In plain Redmine currently non member users could be added as watchers, but change notifications won't be sent to them. This is very confusing.
 
 This plugin allows to add any user in the system as a watcher of some issue. 
 The system behaviour for the watcher user will be similar to that of 'view assigned issues' permission, except that the whole project gets hidden back if the last issue is unwatched (unless other permissions are given).
