@@ -19,10 +19,13 @@ module ExtendedWatchersIssuePatch
               watched_issues = Issue.watched_by(user).map(&:id)
             end
 
-            prj_clause = options.nil? || options[:project].nil? ? "" : " AND projects.id = #{options[:project].id}"
-            watched_group_issues_clause = watched_issues.empty? ? "" : " OR #{table_name}.id IN (#{watched_issues.join(',')} #{prj_clause})"
+            prj_clause = options.nil? || options[:project].nil? ? nil : " #{Project.table_name}.id = #{options[:project].id}"
+            prj_clause << " OR (#{Project.table_name}.lft > #{options[:project].lft} AND #{Project.table_name}.rgt < #{options[:project].rgt})" if !options.nil? and options[:with_subprojects]
+            watched_group_issues_clause = watched_issues.empty? ? "" : " OR #{table_name}.id IN (#{watched_issues.join(',')}"
+            watched_group_issues_clause << (prj_clause.nil? ? "" : " AND ( #{prj_clause} )")
+            watched_group_issues_clause << ")"
 
-            condition = Project.allowed_to_condition(user, :view_issues, options) do |role, user|
+            condition = "( " + Project.allowed_to_condition(user, :view_issues, options) do |role, user|
               # Keep the code DRY
               if [ 'default', 'own' ].include?(role.issues_visibility)
                 watched_issues_clause = watched_issues.empty? ? "" : " OR #{table_name}.id IN (#{watched_issues.join(',')})"
@@ -42,7 +45,7 @@ module ExtendedWatchersIssuePatch
               else
                 "(#{table_name}.is_private = #{connection.quoted_false})"
               end
-            end + "#{watched_group_issues_clause} "
+            end + "#{watched_group_issues_clause}) "
 
             condition
           end
