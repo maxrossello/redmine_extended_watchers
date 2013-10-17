@@ -22,9 +22,8 @@ module ExtendedWatchersIssuePatch
             prj_clause = options.nil? || options[:project].nil? ? nil : " #{Project.table_name}.id = #{options[:project].id}"
             prj_clause << " OR (#{Project.table_name}.lft > #{options[:project].lft} AND #{Project.table_name}.rgt < #{options[:project].rgt})" if !options.nil? and !options[:project].nil? and options[:with_subprojects]
             watched_group_issues_clause = ""
-            watched_group_issues_clause <<  " OR #{table_name}.id IN (#{watched_issues.join(',')}" <<
-                (prj_clause.nil? ? "" : " AND ( #{prj_clause} )")  <<
-                ")"  unless watched_issues.empty?
+            watched_group_issues_clause <<  " OR #{table_name}.id IN (#{watched_issues.join(',')})" <<
+                (prj_clause.nil? ? "" : " AND ( #{prj_clause} )") unless watched_issues.empty?
 
             condition = "( " + Project.allowed_to_condition(user, :view_issues, options) do |role, user|
               # Keep the code DRY
