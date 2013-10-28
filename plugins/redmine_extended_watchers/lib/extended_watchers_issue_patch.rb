@@ -16,7 +16,8 @@ module ExtendedWatchersIssuePatch
             watched_issues = []
             if user.logged?
               user_ids = [user.id] + user.groups.map(&:id)
-              watched_issues = Issue.watched_by(user).map(&:id)
+              watched_issues = Issue.watched_by(user).joins(:project => :enabled_modules).where("#{EnabledModule.table_name}.name = 'issue_tracking'").map(&:id)
+
             end
 
             prj_clause = options.nil? || options[:project].nil? ? nil : " #{Project.table_name}.id = #{options[:project].id}"
