@@ -23,7 +23,7 @@ module ExtendedWatchersApplicationControllerPatch
           end
         end
       elsif (ctrl == "issues" && action == "show")
-        return true if Issue.find(params[:id]).watched_by?(User.current)
+        return true if Issue.find(params[:id]).joins(:project => :enabled_modules).where("#{EnabledModule.table_name}.name = 'issue_tracking'").watched_by?(User.current)
       end
       authorize_without_extwatch(ctrl, action, global)
     end
