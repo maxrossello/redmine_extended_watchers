@@ -20,6 +20,10 @@ module ExtendedWatchersUserPatch
               return true if issue.project == context
             end
           end
+        elsif action == :view_issues
+          Issue.watched_by(self).joins(:project => :enabled_modules).where("#{EnabledModule.table_name}.name = 'issue_tracking'").all.each do |issue|
+            return true if issue.project == context
+          end
         end
       end
       allowed_to_without_extwatch?(action, context, options, &block)
