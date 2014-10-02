@@ -37,9 +37,9 @@ module ExtendedWatchersIssuePatch
                 when 'all'
                   nil
                 when 'default'
-                  "(#{table_name}.is_private = #{connection.quoted_false} OR #{table_name}.author_id = #{user.id} OR #{table_name}.assigned_to_id IN (#{user_ids.join(',')}) #{watched_issues_clause})"
+                  "(#{table_name}.is_private = #{connection.quoted_false} OR #{table_name}.author_id = #{user.id} OR #{table_name}.assigned_to_id IN (\"#{user_ids.join('","')}\") #{watched_issues_clause})"
                 when 'own'
-                  "(#{table_name}.author_id = #{user.id} OR #{table_name}.assigned_to_id IN (#{user_ids.join(',')}) #{watched_issues_clause})"
+                  "(#{table_name}.author_id = #{user.id} OR #{table_name}.assigned_to_id IN (\"#{user_ids.join('","')}\") #{watched_issues_clause})"
                 else
                   '1=0'
                 end
