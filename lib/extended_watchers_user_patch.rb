@@ -13,6 +13,9 @@ module ExtendedWatchersUserPatch
 
   module InstanceMethods
     def allowed_to_with_extwatch?(action, context, options={}, &block)
+      is_allowed = allowed_to_without_extwatch?(action, context, options, &block)
+      return true if is_allowed
+
       if (options[:watchers].nil? || options[:watchers]) && self.logged? && context && context.is_a?(Project)
         if action.is_a?(Hash)
           if action[:controller] == "issues" && action[:action] == "index"
@@ -26,7 +29,7 @@ module ExtendedWatchersUserPatch
           end
         end
       end
-      allowed_to_without_extwatch?(action, context, options, &block)
+      return false
     end
   end
 end
