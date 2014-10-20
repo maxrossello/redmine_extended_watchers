@@ -19,14 +19,10 @@ module ExtendedWatchersUserPatch
       if (options[:watchers].nil? || options[:watchers]) && self.logged? && context && context.is_a?(Project)
         if action.is_a?(Hash)
           if action[:controller] == "issues" && action[:action] == "index"
-            Issue.watched_by(self).joins(:project => :enabled_modules).where("#{EnabledModule.table_name}.name = 'issue_tracking'").all.each do |issue|
-              return true if issue.project == context
-            end
+            return true if Issue.where(:project_id => context).watched_by(self).joins(:project => :enabled_modules).where("#{EnabledModule.table_name}.name = 'issue_tracking'").any?
           end
         elsif action == :view_issues
-          Issue.watched_by(self).joins(:project => :enabled_modules).where("#{EnabledModule.table_name}.name = 'issue_tracking'").all.each do |issue|
-            return true if issue.project == context
-          end
+          return true if Issue.where(:project_id => context).watched_by(self).joins(:project => :enabled_modules).where("#{EnabledModule.table_name}.name = 'issue_tracking'").any?
         end
       end
       return false
