@@ -1,6 +1,6 @@
 = extended_watchers
 
-Tested with redmine 2.3.2, 2.4.2, 2.4.5. Should be compatible with Redmine 2.1+.
+Tested with redmine 2.5.2. Should be compatible with Redmine 2.1+.
 
 In plain Redmine currently non member users could be added as watchers, but change notifications won't be sent to them. This is very confusing.
 
