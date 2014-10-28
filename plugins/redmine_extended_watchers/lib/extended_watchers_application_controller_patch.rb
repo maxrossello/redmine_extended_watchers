@@ -14,7 +14,7 @@ module ExtendedWatchersApplicationControllerPatch
 
     def authorize_with_extwatch(ctrl = params[:controller], action = params[:action], global = false)
       if (ctrl == "projects" && action == "show")
-        Issue.where(:project_id => @project).watched_by(User.current).all.each do |issue|
+        if Issue.where(:project_id => @project).watched_by(User.current).any?
           unless User.current.allowed_to?({:controller => ctrl, :action => action}, @project || @projects, :global => global)
             redirect_to _project_issues_path(@project)
           end
