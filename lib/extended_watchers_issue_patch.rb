@@ -44,7 +44,7 @@ module ExtendedWatchersIssuePatch
           return true if visible
 
           if (usr || User.current).logged?
-            visible =  self.watched_by?(user)
+            visible =  self.watched_by?(usr)
           end
 
           logger.error "visible_with_extwatch #{visible}"
