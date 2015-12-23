@@ -15,7 +15,7 @@ module ExtendedWatchersIssuePatch
             Project.allowed_to_condition(user, :view_issues, options) do |role, user|
               # Keep the code DRY
               if [ 'default', 'own' ].include?(role.issues_visibility)
-                user_ids = [user.id] + user.groups.map(&:id)
+                user_ids = [user.id] + user.groups.map(&:id).compact
                 watched_issues = Issue.watched_by(user).map(&:id)
                 watched_issues_clause = watched_issues.empty? ? "" : " OR #{table_name}.id IN (#{watched_issues.join(',')})"
               end
