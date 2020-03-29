@@ -1,0 +1,10 @@
+.byebug_history
+.metadata/
+.project
+Gemfile.lock
+config/
+db/
+files/
+log/
+test/
+tmp/
