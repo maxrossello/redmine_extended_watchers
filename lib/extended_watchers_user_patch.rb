@@ -6,7 +6,7 @@ module ExtendedWatchersUserPatch
       is_allowed = super(action, context, options, &block)
       return true if is_allowed
       
-      return false if context.archived?
+      return false if context && context.is_a?(Project) && context.archived?
 
       if (options[:watchers].nil? || options[:watchers]) && self.logged? && context && context.is_a?(Project)
         if action.is_a?(Hash)
