@@ -4,7 +4,11 @@ module ExtendedWatchersApplicationControllerPatch
       if (ctrl == "projects" && action == "show")
         if Issue.where(:project_id => @project).watched_by(User.current).any?
           unless User.current.allowed_to?({:controller => ctrl, :action => action}, @project || @projects, :global => global)
-            redirect_to _project_issues_path(@project)
+            if @project.archived?
+              render_403 :message => :notice_not_authorized_archived_project
+            else
+              redirect_to _project_issues_path(@project)
+            end
           end
           return true
         end
