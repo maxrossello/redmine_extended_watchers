@@ -3,12 +3,12 @@ require_dependency 'issue'
 module ExtendedWatchersIssueClassPatch
 
   def visible_condition(user, options={})
-
+    return super(user, options) if (Setting.plugin_redmine_extended_watchers["policy"] == "default")
+      
     watched_issues = []
     if user.id && user.logged?
       user_ids = [user.id] + user.groups.map(&:id).compact
       watched_issues = Issue.watched_by(user).joins(:project => :enabled_modules).where("#{EnabledModule.table_name}.name = 'issue_tracking'").map(&:id)
-
     end
 
     prj_clause = options.nil? || options[:project].nil? ? "1=1" : " #{Project.table_name}.id = #{options[:project].id} AND #{options[:project]}.status != #{Project::STATUS_ARCHIVED}"
@@ -17,7 +17,6 @@ module ExtendedWatchersIssueClassPatch
     watched_group_issues_clause <<  " OR #{table_name}.id IN (#{watched_issues.join(',')}) AND ( #{prj_clause} )" unless watched_issues.empty?
 
     "( " + super(user, options) + "#{watched_group_issues_clause}) "
-
   end
 end
 
@@ -26,7 +25,7 @@ module ExtendedWatchersIssueInstancePatch
   
   def visible?(usr=nil)
     visible = super(usr)
-    return true if visible
+    return visible if visible || Setting.plugin_redmine_extended_watchers["policy"] == "default"
 
     if (usr || User.current).logged?
       visible = self.watched_by?(usr || User.current)
@@ -38,6 +37,8 @@ module ExtendedWatchersIssueInstancePatch
   # Override the acts_as_watchable default to allow any user with view issues
   # rights to watch/see this issue.
   def addable_watcher_users
+    return super if Setting.plugin_redmine_extended_watchers["policy"] == "default"
+      
     users = self.project.users.sort - self.watcher_users
     users.reject! {|user| !user.allowed_to?(:view_issues, self.project)}
     users

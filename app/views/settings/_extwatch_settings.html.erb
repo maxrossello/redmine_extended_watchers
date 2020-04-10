@@ -1,0 +1,24 @@
+<!--table>
+  <tbody>
+    <tr>
+      <th>Extended Watchers</th>
+      <td-->
+        <p>
+            <label>Issue watchers policy </label>
+            <label class="block">
+                <input type="radio" id="policy" value="default" name="settings[policy]" <%= "checked" if settings['policy']=="default"%> >Default
+                <em class="info">Any watcher allowed but no issue change notifications and visibility unless project member (default Redmine behavior)</em>
+            </label>
+            <label class="block">
+                <input type="radio" id="policy" value="extended" name="settings[policy]" <%= "checked" if settings['policy']=="extended"%> >Extended
+                <em class="info">Any watcher allowed. Watchers gain project and issue visibility, and receive notifications</em>
+            </label>
+            <!--label class="block">
+                <input type="radio" id="policy" value="protected" name="settings[policy]" <%= "checked" if settings['policy']=="protected"%> >Protected
+                <em class="info">Only project members with issue view permission can be added as issue watchers</em>
+            </label-->
+        </p>       
+      <!--/td>
+    </tr>
+  </tbody>
+</table-->
