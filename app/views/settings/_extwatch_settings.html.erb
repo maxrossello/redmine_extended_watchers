@@ -7,7 +7,7 @@
             <label>Issue watchers policy </label>
             <label class="block">
                 <input type="radio" id="policy" value="default" name="settings[policy]" <%= "checked" if settings['policy']=="default"%> >Default
-                <em class="info">Any watcher allowed but no issue change notifications and visibility unless project member (default Redmine behavior)</em>
+                <em class="info">Any watcher allowed but no issue change notifications and visibility unless allowed by roles (default Redmine behavior)</em>
             </label>
             <label class="block">
                 <input type="radio" id="policy" value="extended" name="settings[policy]" <%= "checked" if settings['policy']=="extended"%> >Extended

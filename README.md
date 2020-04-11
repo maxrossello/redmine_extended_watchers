@@ -14,3 +14,9 @@ The same applies to private issues: once they are watched, they become visible, 
 ## Installation
 
 Simply install the plug-in into the Redmine plugins folder and restart your server.
+
+## Configuration
+
+The administrator can configure the behavior of the plugin and select either the default Redmine behavior or the extended behavior.
+
+![plugin configuration](screenshots/plugin_config.png) 
