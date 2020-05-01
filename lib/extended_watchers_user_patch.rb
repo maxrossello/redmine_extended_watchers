@@ -4,7 +4,7 @@ module ExtendedWatchersUserPatch
 
    def allowed_to?(action, context, options={}, &block)
       is_allowed = super(action, context, options, &block)
-      return is_allowed if is_allowed || Setting.plugin_redmine_extended_watchers["policy"] == "default"
+      return is_allowed if is_allowed || Setting.plugin_redmine_extended_watchers["policy"] != "extended"
       
       return false if context && context.is_a?(Project) && context.archived?
       

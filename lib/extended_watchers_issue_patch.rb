@@ -24,28 +24,29 @@ end
 module ExtendedWatchersIssueInstancePatch
   
   def visible?(usr=nil)
-    self.watcher_users.include?(usr || User.current) || (usr || User.current).allowed_to?(:view_issues, self.project, {issue: true}) do |role, user|
-       visible = if user.logged?
-         case role.issues_visibility
-         when 'all'
-           true
-         when 'default'
-           !self.is_private? || (self.author == user || user.is_or_belongs_to?(assigned_to))
-         when 'own'
-           self.author == user || user.is_or_belongs_to?(assigned_to)
-         else
-           false
-         end
-       else
-         !self.is_private?
-       end
-       unless role.permissions_all_trackers?(:view_issues)
-         visible &&= role.permissions_tracker_ids?(:view_issues, tracker_id)
-       end
-       visible ||= (Setting.plugin_redmine_extended_watchers["policy"] == "extended" &&
-          self.watcher_users.include?(usr || User.current))
-       visible
-     end
+    return true if Setting.plugin_redmine_extended_watchers["policy"] == "extended" && self.watcher_users.include?(usr || User.current)
+      
+    (usr || User.current).allowed_to?(:view_issues, self.project, {issue: true}) do |role, user|
+      visible = if user.logged?
+        case role.issues_visibility
+        when 'all'
+          true
+        when 'default'
+          !self.is_private? || (self.author == user || user.is_or_belongs_to?(assigned_to))
+        when 'own'
+          self.author == user || user.is_or_belongs_to?(assigned_to) ||
+          (Setting.plugin_redmine_extended_watchers["policy"] != "protected" && self.watcher_users.include?(usr || User.current))
+        else
+          false
+        end
+      else
+        !self.is_private?
+      end
+      unless role.permissions_all_trackers?(:view_issues)
+        visible &&= role.permissions_tracker_ids?(:view_issues, tracker_id)
+      end
+      visible
+    end
   end
 
   # Override the acts_as_watchable default to allow any user with view issues
