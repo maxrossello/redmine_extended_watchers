@@ -22,7 +22,7 @@ module ExtendedWatchersIssuePatch
 
         watched_issues = []
         if user.logged?
-          user_ids = [user.id] + user.groups.map(&:id)
+          user_ids = [user.id] + user.groups.map(&:id).compact
           watched_issues = Issue.watched_by(user).joins(:project => :enabled_modules).where("#{EnabledModule.table_name}.name = 'issue_tracking'").map(&:id)
 
         end
@@ -44,7 +44,7 @@ module ExtendedWatchersIssuePatch
           return true if visible
 
           if (usr || User.current).logged?
-            visible =  self.watched_by?(usr)
+            visible =  self.watched_by?(usr || User.current)
           end
 
           logger.error "visible_with_extwatch #{visible}"
