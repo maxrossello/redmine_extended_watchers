@@ -1,9 +1,11 @@
 .byebug_history
 .metadata/
 .project
+.buildpath
 Gemfile.lock
 config/
 db/
 files/
 log/
 tmp/
+public/
