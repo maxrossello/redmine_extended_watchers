@@ -23,6 +23,7 @@ module ExtendedWatchersApplicationControllerPatch
             if Issue.where(:project_id => @project).watched_by(User.current).any?
                unless User.current.allowed_to?({:controller => ctrl, :action => action}, @project || @projects, :global => global)
                   if @project.archived?
+                     @archived_project = @project
                      render_403 :message => :notice_not_authorized_archived_project
                   else
                      redirect_to _project_issues_path(@project)
