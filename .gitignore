@@ -6,5 +6,4 @@ config/
 db/
 files/
 log/
-test/
 tmp/

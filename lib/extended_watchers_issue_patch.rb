@@ -1,3 +1,20 @@
+# Extended Watchers plugin for Redmine
+# Copyright (C) 2013-2020  Massimo Rossello
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 require_dependency 'issue'
 
 module ExtendedWatchersIssueClassPatch
@@ -10,9 +27,15 @@ module ExtendedWatchersIssueClassPatch
       user_ids = [user.id] + user.groups.map(&:id).compact
       watched_issues = Issue.watched_by(user).joins(:project => :enabled_modules).where("#{EnabledModule.table_name}.name = 'issue_tracking'").map(&:id)
     end
+    
+    if Setting.plugin_redmine_extended_watchers["policy"] == "protected"
+      # enforce issue visibility clause
+      watched_issues.reject! {|issue| !user.allowed_to?(:view_issues, Issue.find(issue).project, {issue: true}) }
+    end 
 
-    prj_clause = options.nil? || options[:project].nil? ? "1=1" : " #{Project.table_name}.id = #{options[:project].id} AND #{options[:project]}.status != #{Project::STATUS_ARCHIVED}"
-    prj_clause << " OR (#{Project.table_name}.lft > #{options[:project].lft} AND #{Project.table_name}.rgt < #{options[:project].rgt} AND #{options[:project]}.status != #{Project::STATUS_ARCHIVED})" if !options.nil? and !options[:project].nil? and options[:with_subprojects]
+    prj_clause = options.nil? || options[:project].nil? ? "1=1" : " #{Project.table_name}.id = #{options[:project].id} AND #{Project.table_name}.status != #{Project::STATUS_ARCHIVED}"
+    prj_clause << " OR (#{Project.table_name}.lft > #{options[:project].lft} AND #{Project.table_name}.rgt < #{options[:project].rgt} AND #{Project.table_name}.status != #{Project::STATUS_ARCHIVED})" if !options.nil? and !options[:project].nil? and options[:with_subprojects]
+  
     watched_group_issues_clause = ""
     watched_group_issues_clause <<  " OR #{table_name}.id IN (#{watched_issues.join(',')}) AND ( #{prj_clause} )" unless watched_issues.empty?
 
@@ -34,8 +57,7 @@ module ExtendedWatchersIssueInstancePatch
         when 'default'
           !self.is_private? || (self.author == user || user.is_or_belongs_to?(assigned_to))
         when 'own'
-          self.author == user || user.is_or_belongs_to?(assigned_to) ||
-          (Setting.plugin_redmine_extended_watchers["policy"] != "protected" && self.watcher_users.include?(usr || User.current))
+          self.author == user || user.is_or_belongs_to?(assigned_to)
         else
           false
         end
@@ -45,6 +67,7 @@ module ExtendedWatchersIssueInstancePatch
       unless role.permissions_all_trackers?(:view_issues)
         visible &&= role.permissions_tracker_ids?(:view_issues, tracker_id)
       end
+      visible ||= (Setting.plugin_redmine_extended_watchers["policy"] == "protected" && self.watcher_users.include?(usr || User.current))
       visible
     end
   end
