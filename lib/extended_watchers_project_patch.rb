@@ -19,19 +19,13 @@ require_dependency 'user'
 
 module ExtendedWatchersProjectPatch
 
-   def visible_condition(user, options={})
-      return super if Setting.plugin_redmine_extended_watchers["policy"] == "default"
-
-      # 'visible' filters out watched issues in protected mode which the user has no permission to view for
-      issues = Issue.visible.watched_by(user).joins(:project => :enabled_modules).where("#{EnabledModule.table_name}.name = 'issue_tracking'")
-
-      if issues.any?
-        super(user,options) + " OR (#{Project.table_name}.id IN (#{issues.all.collect(&:project_id).join(",")}))"
-      else
-        super(user,options)
-      end
+   def allowed_to_condition(user, permission, options={})
+     condition = super(user, permission, options)
+     return condition if (permission != :view_project or (setting = Setting.plugin_redmine_extended_watchers["policy"]) == "default")
+     
+     return "( " + condition + " OR (#{Project.table_name}.id IN (#{Project.select(:id).joins(:issues).where(Issue.visible_condition(user)).to_sql})) )"
    end
-  
+   
 end
 
 unless Project.singleton_class.included_modules.include?(ExtendedWatchersProjectPatch)
