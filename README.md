@@ -1,6 +1,6 @@
 # Redmine Extended Watchers
 
-Compatible with Redmine 4.0.
+Compatible with Redmine 4.1.
 
 In plain Redmine, non member users of a project can be added as issue watchers by member users, but nevertheless the watcher user does not gain any additional view permission either on the watched issue  nor the container project. This is rather misleading and prevents a scenario where a project member wants to engage a non-member user over a specific issue without the need to change overall project permissions and disclose further details.
 
