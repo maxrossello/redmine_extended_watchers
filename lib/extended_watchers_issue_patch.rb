@@ -16,7 +16,17 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 require_dependency 'issue'
-require_dependency 'issue_query'
+
+# including IssueQuery needs the DB to be connected, which may not be the case when 'rails db:create'
+begin
+#  ActiveRecord::Base.establish_connection
+#  ActiveRecord::Base.connection
+#  raise 'not connected' unless ActiveRecord::Base.connected?
+  require_dependency 'issue_query'
+rescue
+  return
+end
+
 
 
 module ExtendedWatchersIssueClassPatch
