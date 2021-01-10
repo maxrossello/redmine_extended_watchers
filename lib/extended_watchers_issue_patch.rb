@@ -53,6 +53,44 @@ module ExtendedWatchersIssueClassPatch
     "( " + super(user, options) + "#{watched_issues_clause} ) "
   end
   
+  # patch act_as_activity_provider
+  # postpone :limit option management in case the database can't handle IN+LIMIT into inner query for watchers
+  def find_events(event_type, user, from, to, options)
+    begin
+      super(event_type, user, from, to, options)
+    rescue
+      provider_options = activity_provider_options[event_type]
+      raise "#{self.name} can not provide #{event_type} events." if provider_options.nil?
+      
+      scope = (provider_options[:scope] || self)
+      
+      if from && to
+        scope = scope.where("#{provider_options[:timestamp]} BETWEEN ? AND ?", from, to)
+      end
+      
+      if options[:author]
+        return [] if provider_options[:author_key].nil?
+        scope = scope.where("#{provider_options[:author_key]} = ?", options[:author].id)
+      end
+      
+      if provider_options.has_key?(:permission)
+        scope = scope.where(Project.allowed_to_condition(user, provider_options[:permission] || :view_project, options))
+      elsif respond_to?(:visible)
+        scope = scope.visible(user, options)
+      else
+        ActiveSupport::Deprecation.warn "acts_as_activity_provider with implicit :permission option is deprecated. Add a visible scope to the #{self.name} model or use explicit :permission option."
+        scope = scope.where(Project.allowed_to_condition(user, "view_#{self.name.underscore.pluralize}".to_sym, options))
+      end
+      
+      if options[:limit]
+        # id and creation time should be in same order in most cases
+        scope = scope.reorder("#{table_name}.id DESC").limit(options[:limit])
+      end
+
+      scope.to_a
+    end
+  end
+
 end
 
 
@@ -101,7 +139,7 @@ module ExtendedWatchersIssueQueryClassPatch
   
   extend ActiveSupport::Concern
 
-  included do
+  included do    
     # IssueQuery replaces 'issues' with 'subtasks' over visible_condition string, to calculate the estimated hours recursively,
     # thus additional statements are compromised.
     # Here extending the substitution to achieve a "FROM issues subtasks" instead of "FROM subtasks" (which does not exist)
@@ -114,7 +152,7 @@ module ExtendedWatchersIssueQueryClassPatch
           :total_estimated_hours,
           :sortable => -> {
             "COALESCE((SELECT SUM(estimated_hours) FROM #{Issue.table_name} subtasks" +
-            " WHERE #{Issue.visible_condition(User.current).gsub(/\bissues\b/, 'subtasks').gsub(/FROM +\"?subtasks\"?/, "FROM #{Issue.table_name} subtasks")}"+
+            " WHERE #{Issue.visible_condition(User.current).gsub(/\bissues\b/, 'subtasks').gsub(/FROM +(\"|\`|\')?subtasks[^ ]?/, "FROM #{Issue.table_name} subtasks")}"+
             "       AND subtasks.root_id = #{Issue.table_name}.root_id AND subtasks.lft >= #{Issue.table_name}.lft AND subtasks.rgt <= #{Issue.table_name}.rgt), 0)"
           },
           :default_order => 'desc')
@@ -136,13 +174,4 @@ end
 unless IssueQuery.singleton_class.included_modules.include?(ExtendedWatchersIssueQueryClassPatch)
   IssueQuery.singleton_class.send(:include, ExtendedWatchersIssueQueryClassPatch)
 end
-
-# scope is included for making it overridden for other clients
-#unless Journal.singleton_class.included_modules.include?(ExtendedWatchersJournalScopePatch)
-#  Journal.singleton_class.send(:include, ExtendedWatchersJournalScopePatch)
-#end
-#
-#unless Issue.singleton_class.included_modules.include?(ExtendedWatchersIssueScopePatch)
-#    Issue.singleton_class.send(:include, ExtendedWatchersIssueScopePatch)
-#end
 
