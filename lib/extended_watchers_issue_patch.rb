@@ -19,9 +19,6 @@ require_dependency 'issue'
 
 # including IssueQuery needs the DB to be connected, which may not be the case when 'rails db:create'
 begin
-#  ActiveRecord::Base.establish_connection
-#  ActiveRecord::Base.connection
-#  raise 'not connected' unless ActiveRecord::Base.connected?
   require_dependency 'issue_query'
 rescue
   return
@@ -62,7 +59,14 @@ module ExtendedWatchersIssueClassPatch
       provider_options = activity_provider_options[event_type]
       raise "#{self.name} can not provide #{event_type} events." if provider_options.nil?
       
-      scope = (provider_options[:scope] || self)
+      scope = provider_options[:scope]
+      if !scope
+        scope = self
+      elsif scope.respond_to?(:call)
+        scope = scope.call
+      else
+        ActiveSupport::Deprecation.warn "acts_as_activity_provider with implicit :scope option is deprecated. Please pass a scope on the #{self.name} as a proc."
+      end
       
       if from && to
         scope = scope.where("#{provider_options[:timestamp]} BETWEEN ? AND ?", from, to)
@@ -126,8 +130,8 @@ module ExtendedWatchersIssueInstancePatch
   # rights to watch/see this issue.
   def addable_watcher_users
     return super if Setting.plugin_redmine_extended_watchers["policy"] == "default"
-      
-    users = self.project.users.sort - self.watcher_users
+    
+    users = self.project.principals.assignable_watchers.sort - self.watcher_users
     users.reject! {|user| !user.allowed_to?(:view_issues, self.project)}
     users
   end

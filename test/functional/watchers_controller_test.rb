@@ -641,5 +641,55 @@ class ExtWatchWatchersControllerTest < Redmine::ControllerTest
       assert_not_include hidden.name, response.body
     end
   end
+  
+  
+  
+  def test_default_autocomplete_for_user_should_not_return_users_without_object_visibility
+    @request.session[:user_id] = 1
+    with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
+      get :autocomplete_for_user, :params => {
+        q: 'rober',
+        project_id: 'onlinestore',
+        object_id: '4',
+        object_type: 'issue'
+      }, :xhr => true
+
+      assert_response :success
+
+      assert response.body.blank?
+    end
+  end
+
+  def test_protected_autocomplete_for_user_should_not_return_users_without_object_visibility
+    @request.session[:user_id] = 1
+    with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
+      get :autocomplete_for_user, :params => {
+        q: 'rober',
+        project_id: 'onlinestore',
+        object_id: '4',
+        object_type: 'issue'
+      }, :xhr => true
+
+      assert_response :success
+
+      assert response.body.blank?
+    end
+  end
+
+  def test_extended_autocomplete_for_user_should_also_return_users_without_object_visibility
+    @request.session[:user_id] = 1
+    with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
+      get :autocomplete_for_user, :params => {
+        q: 'rober',
+        project_id: 'onlinestore',
+        object_id: '4',
+        object_type: 'issue'
+      }, :xhr => true
+
+      assert_response :success
+
+      assert !response.body.blank?
+    end
+  end
 
 end
