@@ -1,12 +1,16 @@
 # Redmine Extended Watchers
 
-Compatible with Redmine 4.0.
-
 In plain Redmine, non member users of a project can be added as issue watchers by member users, but nevertheless the watcher user does not gain any additional view permission either on the watched issue  nor the container project. This is rather misleading and prevents a scenario where a project member wants to engage a non-member user over a specific issue without the need to change overall project permissions and disclose further details.
 
 This plug-in allows to unambiguously add a watcher to an issue if and only if this provides additional view permissions to the watcher user. It adds two alternative behaviors to watchers management with a different scope: one removes ambiguity by applying a restriction to the users that can be added as watchers; the other, instead, extends the visibility permissions of the user.
 
 Refer to the *Configuration* paragraph below for further details.
+
+## Version
+
+Tests are performed through [redmine_testsuites](https://github.com/maxrossello/redmine_testsuites) including all the plugins it supports.
+
+The plugin version corresponds to minimum version of Redmine required. Look at dedicated branch for each Redmine version.
 
 ## Installation
 

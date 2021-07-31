@@ -22,6 +22,8 @@ class ExtWatchIssuesControllerTest < Redmine::ControllerTest
   fixtures :projects, :users, :roles, :members, :member_roles, :enabled_modules,
            :issues, :trackers, :projects_trackers, :issue_statuses, :enumerations, :watchers
 
+  include Redmine::I18n
+
   def setup
     User.current = nil
     Role.find(2).add_permission!(:add_issue_watchers)    
@@ -249,6 +251,58 @@ class ExtWatchIssuesControllerTest < Redmine::ControllerTest
       assert_response :success
       assert_select '.tabs ul li .issues', { text: I18n.t(:label_issue_plural) }
       assert_select '.tabs ul li .overview', { count: 0 }
+    end
+  end
+
+  
+  def test_default_watcher_show_should_mark_invalid_watchers
+    @request.session[:user_id] = 2
+    issue = Issue.find(4)
+    issue.add_watcher User.find(4)
+
+    with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
+      get :show, :params => {:id => issue.id}
+    end
+
+    assert_response :success
+    assert_select 'div#watchers ul' do
+      assert_select 'li.user-4' do
+        assert_select 'span.icon-warning[title=?]', l(:notice_invalid_watcher), text: l(:notice_invalid_watcher)
+      end
+    end
+  end
+
+  def test_protected_watcher_show_should_mark_invalid_watchers
+    @request.session[:user_id] = 2
+    issue = Issue.find(4)
+    issue.add_watcher User.find(4)
+
+    with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
+      get :show, :params => {:id => issue.id}
+    end
+
+    assert_response :success
+    assert_select 'div#watchers ul' do
+      assert_select 'li.user-4' do
+        assert_select 'span.icon-warning[title=?]', l(:notice_invalid_watcher), text: l(:notice_invalid_watcher)
+      end
+    end
+  end
+
+  def test_extended_watcher_show_should_not_mark_invalid_watchers
+    @request.session[:user_id] = 2
+    issue = Issue.find(4)
+    issue.add_watcher User.find(4)
+
+    with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
+      get :show, :params => {:id => issue.id}
+    end
+
+    assert_response :success
+    assert_select 'div#watchers ul' do
+      assert_select 'li.user-4' do
+        assert_select 'span.icon-warning[title=?]', l(:notice_invalid_watcher), text: l(:notice_invalid_watcher), :count => 0
+      end
     end
   end
 

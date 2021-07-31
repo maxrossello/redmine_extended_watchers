@@ -18,15 +18,29 @@
 require_dependency 'watchers_controller'
 
 module ExtendedWatchersControllerPatch
-    
+
   def users_for_new_watcher
-    users = super
-    if Setting.plugin_redmine_extended_watchers["policy"] == "protected" && @project.present?
+    scope = nil
+    if params[:q].blank? && @project.present?
+      scope = @project.principals.assignable_watchers
+    else
+      scope = Principal.assignable_watchers.limit(100)
+    end
+    users = scope.sorted.like(params[:q]).to_a
+    if @watchables && @watchables.size == 1
+      watchable_object = @watchables.first
+      users -= watchable_object.watcher_users
+
+      if Setting.plugin_redmine_extended_watchers["policy"] == "default" and watchable_object.respond_to?(:visible?)
+        users.reject! {|user| user.is_a?(User) && !watchable_object.visible?(user)}
+      end
+    end
+    if Setting.plugin_redmine_extended_watchers["policy"] == "protected" and @project.present?
       users.reject! {|user| !user.allowed_to?(:view_issues, @project)}
     end
     users
   end
-
+    
 end
 
 unless WatchersController.included_modules.include?(ExtendedWatchersControllerPatch)
