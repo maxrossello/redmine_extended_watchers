@@ -36,7 +36,7 @@ module ExtendedWatchersControllerPatch
       end
     end
     if Setting.plugin_redmine_extended_watchers["policy"] == "protected" and @project.present?
-      users.reject! {|user| !user.allowed_to?(:view_issues, @project)}
+      users.reject! {|user| user.respond_to?(:allowed_to?) && !user.allowed_to?(:view_issues, @project)}
     end
     users
   end

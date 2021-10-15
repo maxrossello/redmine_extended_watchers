@@ -1000,4 +1000,114 @@ class IssueTestExtendedWatchers < ActiveSupport::TestCase
     end
   end
 
+  
+def test_default_visible_scope_for_non_member_with_group_watching
+  user = User.find(9)
+  group = Group.new(:name => "Test group")
+  assert group.save
+  group.reload
+  group.users << user
+
+  assert user.projects.empty?
+  with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
+    # Non member user should see issues of public projects only
+    issues = Issue.visible(user).to_a
+    assert issues.any?
+    assert_nil issues.detect {|issue| !issue.project.is_public?}
+    assert_nil issues.detect {|issue| issue.is_private?}
+    assert_visibility_match user, issues
+    
+    # even if watching
+    @ipupu.add_watcher(group)
+    @ipupr.add_watcher(group)
+    @iprpu.add_watcher(group)
+    @iprpr.add_watcher(group)
+    issues = Issue.visible(user).to_a
+    assert_nil issues.detect {|issue| !issue.project.is_public?}
+    assert_nil issues.detect {|issue| issue.is_private?}
+    assert_visibility_match user, issues
+
+    # and nonmember has no :view_issues permission
+    Role.non_member.remove_permission!(:view_issues)
+    user.reload
+    issues = Issue.visible(user).to_a
+    assert_nil issues.detect {|issue| !issue.project.is_public?}
+    assert_nil issues.detect {|issue| issue.is_private?}
+    assert_visibility_match user, issues
+  end
+end
+
+def test_protected_visible_scope_for_non_member_with_group_watching
+  user = User.find(9)
+  group = Group.new(:name => "Test group")
+  assert group.save
+  group.reload
+  group.users << user
+
+  assert user.projects.empty?
+  with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
+    # Non member user should see issues of public projects only
+    issues = Issue.visible(user).to_a
+    assert issues.any?
+    assert_nil issues.detect {|issue| !issue.project.is_public?}
+    assert_nil issues.detect {|issue| issue.is_private?}
+    assert_visibility_match user, issues
+    
+    # unless watching
+    @ipupu.add_watcher(group)
+    @ipupr.add_watcher(group)
+    @iprpu.add_watcher(group)
+    @iprpr.add_watcher(group)
+    issues = Issue.visible(user).to_a
+    assert_nil issues.detect {|issue| !issue.project.is_public?}
+    assert_equal 1, issues.count {|issue| issue.is_private?} # watched private issue in public project
+    assert_visibility_match user, issues
+
+    # unless nonmember has no :view_issues permission
+    Role.non_member.remove_permission!(:view_issues)
+    user.reload
+    issues = Issue.visible(user).to_a
+    assert_nil issues.detect {|issue| !issue.project.is_public?}
+    assert_nil issues.detect {|issue| issue.is_private?}
+    assert_visibility_match user, issues
+  end
+end
+
+def test_extended_visible_scope_for_non_member_with_group_watching
+  user = User.find(9)
+  group = Group.new(:name => "Test group")
+  assert group.save
+  group.reload
+  group.users << user
+
+  assert user.projects.empty?
+  with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
+    # Non member user should see issues of public projects only
+    issues = Issue.visible(user).to_a
+    assert issues.any?
+    assert_nil issues.detect {|issue| !issue.project.is_public?}
+    assert_nil issues.detect {|issue| issue.is_private?}
+    assert_visibility_match user, issues
+    
+    # unless watching
+    @ipupu.add_watcher(group)
+    @ipupr.add_watcher(group)
+    @iprpu.add_watcher(group)
+    @iprpr.add_watcher(group)
+    issues = Issue.visible(user).to_a
+    assert_equal 2, issues.count{|issue| !issue.project.is_public?}
+    assert_equal 2, issues.count {|issue| issue.is_private?}
+    assert_visibility_match user, issues
+
+    # even if nonmember has no :view_issues permission
+    Role.non_member.remove_permission!(:view_issues)
+    user.reload
+    issues = Issue.visible(user).to_a
+    assert_equal 2, issues.count {|issue| !issue.project.is_public?}
+    assert_equal 2, issues.count {|issue| issue.is_private?}
+    assert_visibility_match user, issues
+  end
+end
+
+
 end

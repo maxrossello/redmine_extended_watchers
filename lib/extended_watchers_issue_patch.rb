@@ -94,14 +94,23 @@ module ExtendedWatchersIssueClassPatch
       scope.to_a
     end
   end
-
+  
+  # Override the acts_as_watchable scope to report watchers through watchers groups
+  def watched_by(user)
+    if (user.is_a?(User))
+      joins(:watcher_users).where("#{Watcher.table_name}.user_id IN (?)", user.groups.ids << user.id)
+    else
+      super(user)
+    end
+  end
+  
 end
 
 
 module ExtendedWatchersIssueInstancePatch
   
   def visible?(usr=nil)
-    return true if Setting.plugin_redmine_extended_watchers["policy"] == "extended" && self.watcher_users.include?(usr || User.current)
+    return true if Setting.plugin_redmine_extended_watchers["policy"] == "extended" && self.indirect_watcher_users.include?(usr || User.current)
       
     (usr || User.current).allowed_to?(:view_issues, self.project, {issue: true}) do |role, user|
       visible = if user.logged?
@@ -121,7 +130,7 @@ module ExtendedWatchersIssueInstancePatch
       unless role.permissions_all_trackers?(:view_issues)
         visible &&= role.permissions_tracker_ids?(:view_issues, tracker_id)
       end
-      visible ||= (Setting.plugin_redmine_extended_watchers["policy"] == "protected" && self.watcher_users.include?(usr || User.current))
+      visible ||= (Setting.plugin_redmine_extended_watchers["policy"] == "protected" && self.indirect_watcher_users.include?(usr || User.current))
       visible
     end
   end
@@ -136,6 +145,21 @@ module ExtendedWatchersIssueInstancePatch
     users
   end
   
+  def watched_by?(user)
+    if (user && user.is_a?(User))
+      !!(self.watcher_user_ids.detect {|uid| (user.groups.ids << user.id).include? uid })
+    else
+      super(user)
+    end
+  end
+
+  # Extend the acts_as_watchable scope to report watchers through watchers groups
+  def indirect_watcher_users
+    users = watcher_users.to_a
+    users.each { |g| User.in_group(g).each { |u| users << u if !users.include? u } if g.is_a?(Group) }
+    users
+  end
+
 end
 
 
