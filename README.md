@@ -1,8 +1,13 @@
 # Redmine Extended Watchers
 
-In plain Redmine, non member users of a project can be added as issue watchers by member users, but nevertheless the watcher user does not gain any additional view permission either on the watched issue  nor the container project. This is rather misleading and prevents a scenario where a project member wants to engage a non-member user over a specific issue without the need to change overall project permissions and disclose further details.
+In versions of Redmine prior to 4.2, non member users of a project could be added as issue watchers by member users without gaining the necessary view permission to see the project and the issue itself.  
+This plug-in was originally created to fix this misleading behaviour in one of two chooseable directions: either forbid users that are not project members as Watchers or allow them but simultaneously soft-grant them the needed permissions.
 
-This plug-in allows to unambiguously add a watcher to an issue if and only if this provides additional view permissions to the watcher user. It adds two alternative behaviors to watchers management with a different scope: one removes ambiguity by applying a restriction to the users that can be added as watchers; the other, instead, extends the visibility permissions of the user.
+In Extended Mode, the plug-in allows you to add users as issue watchers even if they don't have sufficient viewing permissions in the project. The user will be then soft-granted viewing permissions to the project and the watched issue.  
+Alternatively, in Protected Mode, the plug-in allows you to prevent adding watchers that do not have sufficient viewing permissions already.
+
+Starting with Redmine 4.2, the default behaviour was made more consistent by not allowing non member users as Watchers, compareable to the Protected Mode of this plug-in. However, the Protected Mode is still useful to configure the individual privileges granted on watched issues through the membership to an unprivileged Role that would otherwise allow to see and manage, with those defined privileges, only the own issues. Thus, being assigned as a watcher to an otherwise hidden issue will grant the issue privileges in the Role over the watched issue(s) too, similarly to the case when the issue is assigned to the user.  
+In this respect, you may intend the Protected Mode as a way to read the *"issues created by or assigned to the user"* setting as *"issues created by or assigned to or watched by the user"*.
 
 Refer to the *Configuration* paragraph below for further details.
 
@@ -52,5 +57,7 @@ In the plugin configuration page the administrator can select one out of three w
   Watching an issue overtakes the visibility limitations of the user role(s) over the issue's tracker.
   
   As a consequence of watching under above conditions, the issue is always visible to the watcher and issue changes are notified via email according to the user's settings.
+  
   Additional visibility applies to private issues too. It lasts until the issue is watched, and is removed thereafter.
+  
   Note: a watcher user that looses view permissions because of role assignments still remains a watcher, but it will anyway have no visibility of the issue nor of the container project. However, it will regain additional permissions once it gains project access because of restored role permissions, unless the issue's watchers are pruned.
