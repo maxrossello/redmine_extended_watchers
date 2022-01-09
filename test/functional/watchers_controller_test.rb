@@ -20,7 +20,8 @@ require File.expand_path('../../test_helper', __FILE__)
 class ExtWatchWatchersControllerTest < Redmine::ControllerTest
   tests WatchersController
   fixtures :projects, :users, :roles, :members, :member_roles, :enabled_modules,
-           :issues, :trackers, :projects_trackers, :issue_statuses, :enumerations, :watchers
+           :issues, :trackers, :projects_trackers, :issue_statuses, :enumerations, :watchers,
+           :groups_users
 
   def setup
     User.current = nil
@@ -689,6 +690,94 @@ class ExtWatchWatchersControllerTest < Redmine::ControllerTest
       assert_response :success
 
       assert !response.body.blank?
+    end
+  end
+
+  
+  
+  def test_default_watcher_user_create_refresh_in_sidebar
+    @request.session[:user_id] = 2
+    with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
+      assert_difference('Watcher.count') do
+        post :create, :params => {
+          :object_type => 'issue', :object_id => '6',
+          :watcher => {:user_id => '4'}
+        }, :xhr => true
+        assert_response :success
+        assert_match /user-4/, response.body
+      end
+    end
+  end
+
+  def test_protected_watcher_user_create_refresh_in_sidebar
+    @request.session[:user_id] = 2
+    with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
+      assert_difference('Watcher.count') do
+        post :create, :params => {
+          :object_type => 'issue', :object_id => '6',
+          :watcher => {:user_id => '4'}
+        }, :xhr => true
+        assert_response :success
+        assert_match /user-4/, response.body
+      end
+    end
+  end
+
+  def test_extended_watcher_user_create_refresh_in_sidebar
+    @request.session[:user_id] = 2
+    with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
+      assert_difference('Watcher.count') do
+        post :create, :params => {
+          :object_type => 'issue', :object_id => '6',
+          :watcher => {:user_id => '4'}
+        }, :xhr => true
+        assert_response :success
+        assert_match /user-4/, response.body
+      end
+    end
+  end
+  
+  
+  
+  def test_default_watcher_group_create_refresh_in_sidebar
+    @request.session[:user_id] = 2
+    with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
+      assert_difference('Watcher.count') do
+        post :create, :params => {
+          :object_type => 'issue', :object_id => '6',
+          :watcher => {:user_id => '10'}
+        }, :xhr => true
+        assert_response :success
+        assert_match /user-10/, response.body
+      end
+    end
+  end
+
+  def test_protected_watcher_group_create_refresh_in_sidebar
+    @request.session[:user_id] = 2
+    with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
+      assert_difference('Watcher.count') do
+        post :create, :params => {
+          :object_type => 'issue', :object_id => '6',
+          :watcher => {:user_id => '10'}
+        }, :xhr => true
+        assert_response :success
+        assert_match /user-10/, response.body
+      end
+    end
+  end
+
+  def test_extended_watcher_group_create_refresh_in_sidebar
+    @request.session[:user_id] = 2
+    with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
+      assert_difference('Watcher.count') do
+        post :create, :params => {
+          :object_type => 'issue', :object_id => '6',
+          :watcher => {:user_id => '10'}
+        }, :xhr => true
+        assert_response :success
+        assert_match /user-10/, response.body
+      end
     end
   end
 
