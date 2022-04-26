@@ -15,16 +15,16 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require_dependency 'issue'
+require 'issue'
 
 # including IssueQuery needs the DB to be connected, which may not be the case when 'rails db:create'
 begin
-  require_dependency 'issue_query'
+  require 'issue_query'
 rescue
   return
 end
 
-
+ExtendedWatchersIssuePatch = "ExtendedWatchersIssuePatch"
 
 module ExtendedWatchersIssueClassPatch
 
