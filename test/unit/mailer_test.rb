@@ -46,28 +46,28 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
     Role.find(2).remove_permission!(:view_issues)
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
       assert Mailer.deliver_issue_add(issue)
-      assert !last_email.bcc.include?(user.mail)
+      assert !last_email.to.include?(user.mail)
       
       # even if user is watcher
       issue.add_watcher(user)
       user.reload
       assert Mailer.deliver_issue_add(issue)
-      assert !last_email.bcc.include?(user.mail)
+      assert !last_email.to.include?(user.mail)
       
       # neither non members with issue view permission
-      assert !last_email.bcc.include?(nonmemember.mail)
+      assert !last_email.to.include?(nonmemember.mail)
 
       # unless they are watching
       issue.add_watcher(nonmemember)
       nonmemember.reload
       assert Mailer.deliver_issue_add(issue)
-      assert last_email.bcc.include?(nonmemember.mail)
+      assert last_email.to.include?(nonmemember.mail)
       
       # but not if nonmembers do not have view issue permission
       Role.non_member.remove_permission!(:view_issues)
       nonmemember.reload
       assert Mailer.deliver_issue_add(issue)
-      assert !last_email.bcc.include?(nonmemember.mail)
+      assert !last_email.to.include?(nonmemember.mail)
     end
   end
 
@@ -79,28 +79,28 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
     assert Mailer.deliver_issue_add(issue)
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
       assert Mailer.deliver_issue_add(issue)
-      assert !last_email.bcc.include?(user.mail)
+      assert !last_email.to.include?(user.mail)
       
       # even if member user is watcher, but without view issue permission
       issue.add_watcher(user)
       user.reload
       assert Mailer.deliver_issue_add(issue)
-      assert !last_email.bcc.include?(user.mail)
+      assert !last_email.to.include?(user.mail)
       
       # neither non members with issue view permission
-      assert !last_email.bcc.include?(nonmemember.mail)
+      assert !last_email.to.include?(nonmemember.mail)
 
       # unless they are watching
       issue.add_watcher(nonmemember)
       nonmemember.reload
       assert Mailer.deliver_issue_add(issue)
-      assert last_email.bcc.include?(nonmemember.mail)
+      assert last_email.to.include?(nonmemember.mail)
       
       # but not if nonmembers do not have view issue permission
       Role.non_member.remove_permission!(:view_issues)
       nonmemember.reload
       assert Mailer.deliver_issue_add(issue)
-      assert !last_email.bcc.include?(nonmemember.mail)
+      assert !last_email.to.include?(nonmemember.mail)
     end
   end
 
@@ -112,28 +112,28 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
     assert Mailer.deliver_issue_add(issue)
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
       assert Mailer.deliver_issue_add(issue)
-      assert !last_email.bcc.include?(user.mail)
+      assert !last_email.to.include?(user.mail)
       
       # unless user is watcher
       issue.add_watcher(user)
       user.reload
       assert Mailer.deliver_issue_add(issue)
-      assert last_email.bcc.include?(user.mail)
+      assert last_email.to.include?(user.mail)
       
       # not for non members with issue view permission
-      assert !last_email.bcc.include?(nonmemember.mail)
+      assert !last_email.to.include?(nonmemember.mail)
 
       # unless they are watching
       issue.add_watcher(nonmemember)
       nonmemember.reload
       assert Mailer.deliver_issue_add(issue)
-      assert last_email.bcc.include?(nonmemember.mail)
+      assert last_email.to.include?(nonmemember.mail)
       
       # even if nonmembers do not have view issue permission
       Role.non_member.remove_permission!(:view_issues)
       nonmemember.reload
       assert Mailer.deliver_issue_add(issue)
-      assert last_email.bcc.include?(nonmemember.mail)
+      assert last_email.to.include?(nonmemember.mail)
     end
   end
 
@@ -150,7 +150,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
       Watcher.create!(:watchable => issue, :user => user)
       assert Mailer.deliver_issue_add(issue)
-      assert last_email.bcc.include?(user.mail)
+      assert last_email.to.include?(user.mail)
     end
   end
 
@@ -166,7 +166,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
       Watcher.create!(:watchable => issue, :user => user)
       assert Mailer.deliver_issue_add(issue)
-      assert last_email.bcc.include?(user.mail)
+      assert last_email.to.include?(user.mail)
     end
   end
 
@@ -182,7 +182,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
       Watcher.create!(:watchable => issue, :user => user)
       assert Mailer.deliver_issue_add(issue)
-      assert last_email.bcc.include?(user.mail)
+      assert last_email.to.include?(user.mail)
     end
   end
 
@@ -194,7 +194,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
     Role.non_member.remove_permission!(:view_issues)
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
       assert Mailer.deliver_issue_add(issue)
-      assert !last_email.bcc.include?(user.mail)
+      assert !last_email.to.include?(user.mail)
     end
   end
 
@@ -206,7 +206,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
       # the protected mode requires view issue permission to extend watchers permissions
       assert Mailer.deliver_issue_add(issue)
-      assert !last_email.bcc.include?(user.mail)
+      assert !last_email.to.include?(user.mail)
     end
   end
 
@@ -218,7 +218,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
       # the plugin provides full watching features, including notifications, also to watchers with no membership
       assert Mailer.deliver_issue_add(issue)
-      assert last_email.bcc.include?(user.mail)
+      assert last_email.to.include?(user.mail)
     end
   end
 
@@ -232,31 +232,31 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
       Role.non_member.add_permission! :view_private_notes
       Mailer.deliver_issue_edit(journal)
-      assert_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.bcc.sort
+      assert_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.to.sort
 
       Role.non_member.remove_permission! :view_private_notes
       Mailer.deliver_issue_edit(journal)
-      assert_not_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.bcc.sort
+      assert_not_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.to.sort
     end
 
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
       Role.non_member.add_permission! :view_private_notes
       Mailer.deliver_issue_edit(journal)
-      assert_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.bcc.sort
+      assert_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.to.sort
 
       Role.non_member.remove_permission! :view_private_notes
       Mailer.deliver_issue_edit(journal)
-      assert_not_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.bcc.sort
+      assert_not_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.to.sort
     end
 
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
       Role.non_member.add_permission! :view_private_notes
       Mailer.deliver_issue_edit(journal)
-      assert_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.bcc.sort
+      assert_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.to.sort
 
       Role.non_member.remove_permission! :view_private_notes
       Mailer.deliver_issue_edit(journal)
-      assert_not_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.bcc.sort
+      assert_not_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.to.sort
     end
   end
   
@@ -274,7 +274,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
       ActionMailer::Base.deliveries.clear
 
       Mailer.deliver_issue_edit(journal)
-      last_email.bcc.each do |email|
+      last_email.to.each do |email|
         user = User.find_by_mail(email)
         assert private_issue.visible?(user), "Issue was not visible to #{user}"
       end
@@ -284,7 +284,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
       ActionMailer::Base.deliveries.clear
 
       Mailer.deliver_issue_edit(journal)
-      last_email.bcc.each do |email|
+      last_email.to.each do |email|
         user = User.find_by_mail(email)
         assert private_issue.visible?(user), "Issue was not visible to #{user}"
       end
@@ -294,7 +294,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
       ActionMailer::Base.deliveries.clear
 
       Mailer.deliver_issue_edit(journal)
-      last_email.bcc.each do |email|
+      last_email.to.each do |email|
         user = User.find_by_mail(email)
         assert private_issue.visible?(user), "Issue was not visible to #{user}"
       end
@@ -319,7 +319,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
         Mailer.reminders(:days => 42)
         assert_equal 1, ActionMailer::Base.deliveries.size
         mail = last_email
-        assert mail.bcc.include?('dlopper@somenet.foo')
+        assert mail.to.include?('dlopper@somenet.foo')
         assert_mail_body_no_match 'Issue dlopper should not see', mail
         
         # neither if watching
@@ -329,7 +329,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
         Mailer.reminders(:days => 42)
         assert_equal 1, ActionMailer::Base.deliveries.size
         mail = last_email
-        assert mail.bcc.include?('dlopper@somenet.foo')
+        assert mail.to.include?('dlopper@somenet.foo')
         assert_mail_body_no_match 'Issue dlopper should not see', mail
       end
     end
@@ -352,7 +352,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
         Mailer.reminders(:days => 42)
         assert_equal 1, ActionMailer::Base.deliveries.size
         mail = last_email
-        assert mail.bcc.include?('dlopper@somenet.foo')
+        assert mail.to.include?('dlopper@somenet.foo')
         assert_mail_body_no_match 'Issue dlopper should not see', mail
 
         # neither if watching
@@ -362,7 +362,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
         Mailer.reminders(:days => 42)
         assert_equal 1, ActionMailer::Base.deliveries.size
         mail = last_email
-        assert mail.bcc.include?('dlopper@somenet.foo')
+        assert mail.to.include?('dlopper@somenet.foo')
         assert_mail_body_no_match 'Issue dlopper should not see', mail
       end
     end
@@ -385,7 +385,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
         Mailer.reminders(:days => 42)
         assert_equal 1, ActionMailer::Base.deliveries.size
         mail = last_email
-        assert mail.bcc.include?('dlopper@somenet.foo')
+        assert mail.to.include?('dlopper@somenet.foo')
         assert_mail_body_no_match 'Issue dlopper should not see', mail
 
         # unless if watching
@@ -395,7 +395,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
         Mailer.reminders(:days => 42)
         assert_equal 1, ActionMailer::Base.deliveries.size
         mail = last_email
-        assert mail.bcc.include?('dlopper@somenet.foo')
+        assert mail.to.include?('dlopper@somenet.foo')
         assert_mail_body_match 'Issue dlopper should not see', mail
       end
     end

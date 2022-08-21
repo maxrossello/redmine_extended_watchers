@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -27,7 +29,6 @@ $redmine_test_ldap_server = ENV['REDMINE_TEST_LDAP_SERVER'] || '127.0.0.1'
 ENV["RAILS_ENV"] = "test"
 require File.expand_path(File.dirname(__FILE__) + "/../../../config/environment")
 require 'rails/test_help'
-require Rails.root.join('test', 'mocks', 'open_id_authentication_mock.rb').to_s
 
 require File.expand_path(File.dirname(__FILE__) + '/object_helpers')
 include ObjectHelpers
@@ -44,6 +45,9 @@ FileUtils.mkdir_p $redmine_tmp_attachments_directory
 require "minitest/reporters"
 Minitest::Reporters.use! [Minitest::Reporters::ProgressReporter.new]
 
+$redmine_tmp_pdf_directory = "#{Rails.root}/tmp/test/pdf"
+FileUtils.mkdir_p $redmine_tmp_pdf_directory
+FileUtils.rm Dir.glob('#$redmine_tmp_pdf_directory/*.pdf')
 
 class ActionView::TestCase
   helper :application
@@ -51,17 +55,20 @@ class ActionView::TestCase
 end
 
 class ActiveSupport::TestCase
+  parallelize(workers: 1)
+
   include ActionDispatch::TestProcess
-  
+
   self.use_transactional_tests = true
   self.use_instantiated_fixtures  = false
 
   def uploaded_test_file(name, mime)
-    fixture_file_upload("files/#{name}", mime, true)
+    fixture_file_upload(name.to_s, mime, true)
   end
 
   def mock_file(options=nil)
-    options ||= {
+    options ||=
+      {
         :original_filename => 'a_file.png',
         :content_type => 'image/png',
         :size => 32
@@ -86,7 +93,8 @@ class ActiveSupport::TestCase
 
   def with_settings(options, &block)
     saved_settings = options.keys.inject({}) do |h, k|
-      h[k] = case Setting[k]
+      h[k] =
+        case Setting[k]
         when Symbol, false, true, nil
           Setting[k]
         else
@@ -120,7 +128,7 @@ class ActiveSupport::TestCase
   def self.ldap_configured?
     @test_ldap = Net::LDAP.new(:host => $redmine_test_ldap_server, :port => 389)
     return @test_ldap.bind
-  rescue Exception => e
+  rescue => e
     # LDAP is not listening
     return nil
   end
@@ -131,6 +139,14 @@ class ActiveSupport::TestCase
 
   def convert_installed?
     self.class.convert_installed?
+  end
+
+  def self.gs_installed?
+    Redmine::Thumbnail.gs_available?
+  end
+
+  def gs_installed?
+    self.class.gs_installed?
   end
 
   # Returns the path to the test +vendor+ repository
@@ -152,6 +168,30 @@ class ActiveSupport::TestCase
     File.directory?(repository_path(vendor))
   end
 
+  def repository_configured?(vendor)
+    self.class.repository_configured?(vendor)
+  end
+
+  def self.is_mysql_utf8mb4
+    return false unless Redmine::Database.mysql?
+
+    character_sets = %w[
+      character_set_connection
+      character_set_database
+      character_set_results
+      character_set_server
+    ]
+    ActiveRecord::Base.connection.
+        select_rows('show variables like "character%"').each do |r|
+      return false if character_sets.include?(r[0]) && r[1] != "utf8mb4"
+    end
+    return true
+  end
+
+  def is_mysql_utf8mb4
+    self.class.is_mysql_utf8mb4
+  end
+
   def repository_path_hash(arr)
     hs = {}
     hs[:path]  = arr.join("/")
@@ -160,15 +200,15 @@ class ActiveSupport::TestCase
   end
 
   def sqlite?
-    ActiveRecord::Base.connection.adapter_name =~ /sqlite/i
+    Redmine::Database.sqlite?
   end
 
   def mysql?
-    ActiveRecord::Base.connection.adapter_name =~ /mysql/i
+    Redmine::Database.mysql?
   end
 
   def postgresql?
-    ActiveRecord::Base.connection.adapter_name =~ /postgresql/i
+    Redmine::Database.postgresql?
   end
 
   def quoted_date(date)
@@ -195,7 +235,7 @@ class ActiveSupport::TestCase
     saved = object.save
     message = "#{object.class} could not be saved"
     errors = object.errors.full_messages.map {|m| "- #{m}"}
-    message << ":\n#{errors.join("\n")}" if errors.any?
+    message += ":\n#{errors.join("\n")}" if errors.any?
     assert_equal true, saved, message
   end
 
@@ -212,7 +252,7 @@ class ActiveSupport::TestCase
   end
 
   def assert_select_in(text, *args, &block)
-    d = Nokogiri::HTML(CGI::unescapeHTML(String.new(text))).root
+    d = Nokogiri::HTML(CGI.unescapeHTML(String.new(text))).root
     assert_select(d, *args, &block)
   end
 
@@ -241,7 +281,7 @@ class ActiveSupport::TestCase
   end
 
   def mail_body(mail)
-    mail.parts.first.body.encoded
+    (mail.multipart? ? mail.parts.first : mail).body.encoded
   end
 
   # Returns the lft value for a new root issue
@@ -253,14 +293,14 @@ end
 module Redmine
   class MockFile
     attr_reader :size, :original_filename, :content_type
-  
+
     def initialize(options={})
       @size = options[:size] || 32
       @original_filename = options[:original_filename] || options[:filename]
       @content_type = options[:content_type]
       @content = options[:content] || 'x'*size
     end
-  
+
     def read(*args)
       if @eof
         false
@@ -276,14 +316,14 @@ module Redmine
       arg = arg.dup
       request = arg.keys.detect {|key| key.is_a?(String)}
       raise ArgumentError unless request
+
       options = arg.slice!(request)
-
       raise ArgumentError unless request =~ /\A(GET|POST|PUT|PATCH|DELETE)\s+(.+)\z/
+
       method, path = $1.downcase.to_sym, $2
-
       raise ArgumentError unless arg.values.first =~ /\A(.+)#(.+)\z/
-      controller, action = $1, $2
 
+      controller, action = $1, $2
       assert_routing(
         {:method => method, :path => path},
         options.merge(:controller => controller, :action => action)
@@ -307,12 +347,12 @@ module Redmine
       ids = css_select('tr.issue td.id').map(&:text).map(&:to_i)
       Issue.where(:id => ids).sort_by {|issue| ids.index(issue.id)}
     end
-  
+
     # Return the columns that are displayed in the issue list
     def columns_in_issues_list
       css_select('table.issues thead th:not(.checkbox)').map(&:text).select(&:present?)
     end
-  
+
     # Return the columns that are displayed in the list
     def columns_in_list
       css_select('table.list thead th:not(.checkbox)').map(&:text).select(&:present?)
@@ -327,12 +367,19 @@ module Redmine
     def assert_query_filters(expected_filters)
       response.body =~ /initFilters\(\);\s*((addFilter\(.+\);\s*)*)/
       filter_init = $1.to_s
-  
+
       expected_filters.each do |field, operator, values|
         s = "addFilter(#{field.to_json}, #{operator.to_json}, #{Array(values).to_json});"
         assert_include s, filter_init
       end
       assert_equal expected_filters.size, filter_init.scan("addFilter").size, "filters counts don't match"
+    end
+
+    # Saves the generated PDF in tmp/test/pdf
+    def save_pdf
+      assert_equal 'application/pdf', response.media_type
+      filename = "#{self.class.name.underscore}__#{method_name}.pdf"
+      File.binwrite(File.join($redmine_tmp_pdf_directory, filename), response.body)
     end
   end
 
@@ -348,16 +395,24 @@ module Redmine
   end
 
   class IntegrationTest < ActionDispatch::IntegrationTest
+    def setup
+      ActionMailer::MailDeliveryJob.disable_test_adapter
+      super
+    end
+
     def log_user(login, password)
       User.anonymous
       get "/login"
       assert_nil session[:user_id]
       assert_response :success
 
-      post "/login", :params => {
+      post(
+        "/login",
+        :params => {
           :username => login,
           :password => password
         }
+      )
       assert_equal login, User.find(session[:user_id]).login
     end
 
@@ -367,6 +422,7 @@ module Redmine
   end
 
   module ApiTest
+    #API_FORMATS = %w(json xml).freeze
 
     # Base class for API tests
     class Base < Redmine::IntegrationTest
@@ -391,9 +447,11 @@ module Redmine
       def upload(format, content, credentials)
         set_tmp_attachments_directory
         assert_difference 'Attachment.count' do
-          post "/uploads.#{format}",
+          post(
+            "/uploads.#{format}",
             :params => content,
             :headers => {"CONTENT_TYPE" => 'application/octet-stream'}.merge(credentials)
+          )
           assert_response :created
         end
         data = response_data
@@ -405,9 +463,10 @@ module Redmine
 
       # Parses the response body based on its content type
       def response_data
-        unless response.content_type.to_s =~ /^application\/(.+)/
-          raise "Unexpected response type: #{response.content_type}"
+        unless response.media_type.to_s =~ /^application\/(.+)/
+          raise "Unexpected response type: #{response.media_type}"
         end
+
         format = $1
         case format
         when 'xml'
@@ -425,8 +484,10 @@ module Redmine
         arg = arg.dup
         request = arg.keys.detect {|key| key.is_a?(String)}
         raise ArgumentError unless request
+
         options = arg.slice!(request)
-  
+
+        #API_FORMATS.each do |format|
         api_formats = %w(json xml).freeze
         api_formats.each do |format|
           format_request = request.sub /$/, ".#{format}"

@@ -19,12 +19,12 @@ require 'redmine'
 
 Rails.logger.info 'Starting Extended Watchers plugin for Redmine'
 
-require_dependency 'extended_watchers_issue_patch'
-require_dependency 'extended_watchers_controller_patch'
-require_dependency 'extended_watchers_user_patch'
-require_dependency 'extended_watchers_principal_patch'
-require_dependency 'extended_watchers_project_patch'
-require_dependency 'extended_watchers_application_controller_patch'
+require_relative 'lib/extended_watchers_issue_patch'
+require_relative 'lib/extended_watchers_controller_patch'
+require_relative 'lib/extended_watchers_user_patch'
+require_relative 'lib/extended_watchers_principal_patch'
+require_relative 'lib/extended_watchers_project_patch'
+require_relative 'lib/extended_watchers_application_controller_patch'
 
 Redmine::Plugin.register :redmine_extended_watchers do
   name 'Redmine Extended Watchers plugin'
