@@ -808,7 +808,7 @@ class IssueTestExtendedWatchers < ActiveSupport::TestCase
       
       issues = Issue.where(:project_id => 1).visible(user).to_a
       assert issues.any?
-      assert_equal [1,2], issues.map(&:tracker_id).uniq
+      assert_equal [1,2], issues.map(&:tracker_id).uniq.sort
       
       assert Issue.where(:project_id => 1).all? {|issue| (issue.visible?(user) ^ issue.tracker_id != 2) || issue.id == 1 }
     end
@@ -839,7 +839,7 @@ class IssueTestExtendedWatchers < ActiveSupport::TestCase
       
       issues = Issue.where(:project_id => 1).visible(user).to_a
       assert issues.any?
-      assert_equal [1,2], issues.map(&:tracker_id).uniq
+      assert_equal [1,2], issues.map(&:tracker_id).uniq.sort
       
       assert Issue.where(:project_id => 1).all? {|issue| (issue.visible?(user) ^ issue.tracker_id != 2) || issue.id == 1 }
     end
