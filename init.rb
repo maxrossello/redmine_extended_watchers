@@ -1,5 +1,5 @@
 # Extended Watchers plugin for Redmine
-# Copyright (C) 2013-2020  Massimo Rossello
+# Copyright (C) 2013-  Massimo Rossello
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -30,10 +30,10 @@ Redmine::Plugin.register :redmine_extended_watchers do
   name 'Redmine Extended Watchers plugin'
   author 'Massimo Rossello'
   description 'Enables all users to be assigned as watchers of an issue and have limited access to it in the project'
-  version '5.0.2'
+  version '5.0.10'
   url 'https://github.com/maxrossello/redmine_extended_watchers.git'
   author_url 'https://github.com/maxrossello'
-  requires_redmine :version_or_higher => '5.0.2'
+  requires_redmine :version_or_higher => '5.0.10'
 
   # policy: default, extended, protected 
   settings :default => {'policy' => 'extended'}, :partial => 'settings/extwatch_settings'

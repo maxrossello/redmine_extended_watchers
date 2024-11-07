@@ -1,5 +1,5 @@
 # Extended Watchers plugin for Redmine
-# Copyright (C) 2013-2020  Massimo Rossello
+# Copyright (C) 2013-  Massimo Rossello
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -143,6 +143,17 @@ module ExtendedWatchersIssuePatch
       users = self.project.principals.assignable_watchers.sort - self.watcher_users
       users.reject! {|user| !user.allowed_to?(:view_issues, self.project)}
       users
+    end
+    
+    # true if user can be added as a watcher
+    # in extended mode, any user is candidate since watching discloses visibility
+    def valid_watcher?(user)
+      return true if Setting.plugin_redmine_extended_watchers["policy"] == "extended"
+      
+      return true unless respond_to?(:visible?)
+      return true unless user.is_a?(User)
+      
+      visible?(user)
     end
     
     def watched_by?(user)
