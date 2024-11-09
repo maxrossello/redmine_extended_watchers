@@ -1,5 +1,5 @@
 # Extended Watchers plugin for Redmine
-# Copyright (C) 2013-2020  Massimo Rossello
+# Copyright (C) 2013-  Massimo Rossello
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -692,7 +692,7 @@ class ExtWatchWatchersControllerTest < Redmine::ControllerTest
       assert !response.body.blank?
     end
   end
-
+	
   
   
   def test_default_watcher_user_create_refresh_in_sidebar
@@ -701,11 +701,13 @@ class ExtWatchWatchersControllerTest < Redmine::ControllerTest
       assert_difference('Watcher.count') do
         post :create, :params => {
           :object_type => 'issue', :object_id => '6',
-          :watcher => {:user_id => '4'}
+          :watcher => {:user_id => '8'}
         }, :xhr => true
         assert_response :success
-        assert_match /user-4/, response.body
+        assert_match /watchers/, response.body
+        assert_match /ajax-modal/, response.body
       end
+      assert Issue.find(6).watched_by?(User.find(8))
     end
   end
 
@@ -715,11 +717,13 @@ class ExtWatchWatchersControllerTest < Redmine::ControllerTest
       assert_difference('Watcher.count') do
         post :create, :params => {
           :object_type => 'issue', :object_id => '6',
-          :watcher => {:user_id => '4'}
+          :watcher => {:user_id => '8'}
         }, :xhr => true
         assert_response :success
-        assert_match /user-4/, response.body
+        assert_match /watchers/, response.body
+        assert_match /ajax-modal/, response.body
       end
+      assert Issue.find(6).watched_by?(User.find(8))
     end
   end
 
@@ -729,11 +733,64 @@ class ExtWatchWatchersControllerTest < Redmine::ControllerTest
       assert_difference('Watcher.count') do
         post :create, :params => {
           :object_type => 'issue', :object_id => '6',
+          :watcher => {:user_id => '8'}
+        }, :xhr => true
+        assert_response :success
+        assert_match /watchers/, response.body
+        assert_match /ajax-modal/, response.body
+      end
+      assert Issue.find(6).watched_by?(User.find(8))
+    end
+  end
+
+
+
+  # nonmember user that cannot view project issues
+  def test_default_watcher_nonmember_user_create_refresh_in_sidebar
+    @request.session[:user_id] = 2
+    with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
+      assert_no_difference('Watcher.count') do
+        post :create, :params => {
+          :object_type => 'issue', :object_id => '6',
           :watcher => {:user_id => '4'}
         }, :xhr => true
         assert_response :success
-        assert_match /user-4/, response.body
+        assert_match /watchers/, response.body
+        assert_match /ajax-modal/, response.body
       end
+      assert !Issue.find(6).watched_by?(User.find(4))
+    end
+  end
+
+  def test_protected_watcher_nonmember_user_create_refresh_in_sidebar
+    @request.session[:user_id] = 2
+    with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
+      assert_no_difference('Watcher.count') do
+        post :create, :params => {
+          :object_type => 'issue', :object_id => '6',
+          :watcher => {:user_id => '4'}
+        }, :xhr => true
+        assert_response :success
+        assert_match /watchers/, response.body
+        assert_match /ajax-modal/, response.body
+      end
+      assert !Issue.find(6).watched_by?(User.find(4))
+    end
+  end
+
+  def test_extended_watcher_nonmember_user_create_refresh_in_sidebar
+    @request.session[:user_id] = 2
+    with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
+      assert_difference('Watcher.count') do
+        post :create, :params => {
+          :object_type => 'issue', :object_id => '6',
+          :watcher => {:user_id => '4'}
+        }, :xhr => true
+        assert_response :success
+        assert_match /watchers/, response.body
+        assert_match /ajax-modal/, response.body
+      end
+      assert Issue.find(6).watched_by?(User.find(4))
     end
   end
   
@@ -748,8 +805,10 @@ class ExtWatchWatchersControllerTest < Redmine::ControllerTest
           :watcher => {:user_id => '10'}
         }, :xhr => true
         assert_response :success
-        assert_match /user-10/, response.body
+        assert_match /watchers/, response.body
+        assert_match /ajax-modal/, response.body
       end
+      assert Issue.find(6).watched_by?(Group.find(10))
     end
   end
 
@@ -762,8 +821,10 @@ class ExtWatchWatchersControllerTest < Redmine::ControllerTest
           :watcher => {:user_id => '10'}
         }, :xhr => true
         assert_response :success
-        assert_match /user-10/, response.body
+        assert_match /watchers/, response.body
+        assert_match /ajax-modal/, response.body
       end
+      assert Issue.find(6).watched_by?(Group.find(10))
     end
   end
 
@@ -776,8 +837,10 @@ class ExtWatchWatchersControllerTest < Redmine::ControllerTest
           :watcher => {:user_id => '10'}
         }, :xhr => true
         assert_response :success
-        assert_match /user-10/, response.body
+        assert_match /watchers/, response.body
+        assert_match /ajax-modal/, response.body
       end
+      assert Issue.find(6).watched_by?(Group.find(10))
     end
   end
 

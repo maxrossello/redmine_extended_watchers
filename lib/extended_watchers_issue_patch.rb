@@ -1,5 +1,5 @@
 # Extended Watchers plugin for Redmine
-# Copyright (C) 2013-2020  Massimo Rossello
+# Copyright (C) 2013-  Massimo Rossello
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -134,7 +134,7 @@ module ExtendedWatchersIssuePatch
         visible
       end
     end
-  
+
     # Override the acts_as_watchable default to allow any user with view issues
     # rights to watch/see this issue.
     def addable_watcher_users
@@ -143,6 +143,17 @@ module ExtendedWatchersIssuePatch
       users = self.project.principals.assignable_watchers.sort - self.watcher_users
       users.reject! {|user| !user.allowed_to?(:view_issues, self.project)}
       users
+    end
+    
+    # true if user can be added as a watcher
+    # in extended mode, any user is candidate since watching discloses visibility
+    def valid_watcher?(user)
+      return true if Setting.plugin_redmine_extended_watchers["policy"] == "extended"
+      
+      return true unless respond_to?(:visible?)
+      return true unless user.is_a?(User)
+      
+      visible?(user)
     end
     
     def watched_by?(user)
@@ -155,11 +166,17 @@ module ExtendedWatchersIssuePatch
   
     # Extend the acts_as_watchable scope to report watchers through watchers groups
     def indirect_watcher_users
-      users = watcher_users.to_a
-      users.each { |g| User.in_group(g).each { |u| users << u if !users.include? u } if g.is_a?(Group) }
-      users
+      users = watcher_users.load
+    
+      users.flat_map do |user|
+        if user.is_a?(Group)
+          User.in_group(user)
+        else
+          [user]
+        end
+      end.uniq
     end
-  
+
   end
   
   

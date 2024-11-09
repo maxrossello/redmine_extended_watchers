@@ -1,5 +1,5 @@
 # Extended Watchers plugin for Redmine
-# Copyright (C) 2013-2020  Massimo Rossello
+# Copyright (C) 2013-  Massimo Rossello
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License

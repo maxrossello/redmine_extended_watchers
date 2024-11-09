@@ -1,5 +1,5 @@
 # Extended Watchers plugin for Redmine
-# Copyright (C) 2013-2020  Massimo Rossello
+# Copyright (C) 2013-  Massimo Rossello
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,18 +21,24 @@ module ExtendedWatchersControllerPatch
 
   def users_for_new_watcher
     scope = nil
-    if params[:q].blank? && @project.present?
-      scope = @project.principals.assignable_watchers
+    if params[:q].blank?
+      if @project.present?
+        scope = @project.principals.assignable_watchers
+      elsif @projects.present? && @projects.size > 1
+        scope = Principal.joins(:members).where(:members => { :project_id => @projects }).assignable_watchers.distinct
+      end
     else
       scope = Principal.assignable_watchers.limit(100)
     end
     users = scope.sorted.like(params[:q]).to_a
     if @watchables && @watchables.size == 1
       watchable_object = @watchables.first
-      users -= watchable_object.watcher_users.reload
-
-      if Setting.plugin_redmine_extended_watchers["policy"] == "default" and watchable_object.respond_to?(:visible?)
-        users.reject! {|user| user.is_a?(User) && !watchable_object.visible?(user)}
+      users -= watchable_object.visible_watcher_users
+    end
+    @watchables&.each do |watchable|
+      watchable.reload
+      if Setting.plugin_redmine_extended_watchers["policy"] == "default"
+        users.reject!{|user| !watchable.valid_watcher?(user)}
       end
     end
     if Setting.plugin_redmine_extended_watchers["policy"] == "protected" and @project.present?
