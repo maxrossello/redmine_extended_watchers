@@ -35,8 +35,9 @@ module ExtendedWatchersControllerPatch
       watchable_object = @watchables.first
       users -= watchable_object.visible_watcher_users
     end
-    if Setting.plugin_redmine_extended_watchers["policy"] == "default"
-      @watchables&.each do |watchable|
+    @watchables&.each do |watchable|
+      watchable.reload
+      if Setting.plugin_redmine_extended_watchers["policy"] == "default"
         users.reject!{|user| !watchable.valid_watcher?(user)}
       end
     end
