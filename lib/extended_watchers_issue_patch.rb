@@ -182,27 +182,29 @@ module ExtendedWatchersIssuePatch
   
   module ExtendedWatchersIssueQueryClassPatch
     
-    extend ActiveSupport::Concern
-  
-    included do    
-      # IssueQuery replaces 'issues' with 'subtasks' over visible_condition string, to calculate the estimated hours recursively,
-      # thus additional statements are compromised.
-      # Here extending the substitution to achieve a "FROM issues subtasks" instead of "FROM subtasks" (which does not exist)
-      
-      index = IssueQuery.available_columns.find_index {|column| column.name == :total_estimated_hours}
-  
+    # IssueQuery replaces 'issues' with 'subtasks' over visible_condition string, to calculate the estimated hours recursively,
+    # thus additional statements are compromised.
+    # Here extending the substitution to achieve a "FROM issues subtasks" instead of "FROM subtasks" (which does not exist)
+
+    def available_columns
+      columns = super
+      index = columns.find_index { |column| column.name == :total_estimated_hours }
+
       if index
-        IssueQuery.available_columns[index] =
-          QueryColumn.new(
-            :total_estimated_hours,
-            :sortable => -> {
-              "COALESCE((SELECT SUM(estimated_hours) FROM #{Issue.table_name} subtasks" +
-              " WHERE #{Issue.visible_condition(User.current).gsub(/\bissues\b/, 'subtasks').gsub(/FROM +(\"|\`|\')?subtasks[^ ]?/, "FROM #{Issue.table_name} subtasks")}"+
-              "       AND subtasks.root_id = #{Issue.table_name}.root_id AND subtasks.lft >= #{Issue.table_name}.lft AND subtasks.rgt <= #{Issue.table_name}.rgt), 0)"
-            },
-            :default_order => 'desc')
+        columns[index] = QueryColumn.new(
+          :total_estimated_hours,
+          sortable: lambda {
+            "COALESCE((SELECT SUM(estimated_hours) FROM #{Issue.table_name} subtasks" \
+            " WHERE #{Issue.visible_condition(User.current).gsub(/\bissues\b/, 'subtasks').gsub(/FROM +(\"|\`|\')?subtasks[^ ]?/, "FROM #{Issue.table_name} subtasks")}" \
+            "       AND subtasks.root_id = #{Issue.table_name}.root_id AND subtasks.lft >= #{Issue.table_name}.lft AND subtasks.rgt <= #{Issue.table_name}.rgt), 0)"
+          },
+          default_order: 'desc'
+        )
       end
+
+      columns
     end
+    
   end
 end
 
@@ -217,6 +219,6 @@ unless Issue.singleton_class.included_modules.include?(ExtendedWatchersIssuePatc
 end
 
 unless IssueQuery.singleton_class.included_modules.include?(ExtendedWatchersIssuePatch::ExtendedWatchersIssueQueryClassPatch)
-  IssueQuery.singleton_class.send(:include, ExtendedWatchersIssuePatch::ExtendedWatchersIssueQueryClassPatch)
+  IssueQuery.singleton_class.send(:prepend, ExtendedWatchersIssuePatch::ExtendedWatchersIssueQueryClassPatch)
 end
 
