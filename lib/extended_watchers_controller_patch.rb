@@ -50,5 +50,5 @@ module ExtendedWatchersControllerPatch
 end
 
 unless WatchersController.included_modules.include?(ExtendedWatchersControllerPatch)
-    WatchersController.send(:prepend, ExtendedWatchersControllerPatch)
+    WatchersController.prepend(ExtendedWatchersControllerPatch)
 end

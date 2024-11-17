@@ -44,6 +44,8 @@ In the plugin configuration page the administrator can select one out of three w
   
   Additional visibility applies to private issues too. It lasts until the issue is watched, and is removed thereafter.
   
+  **Warning:** this mode is specifically crafted to grant visibility to *any* user in the system. Therefore, the list of *all* users becomes visible in the autocompletion form irrespective of the user visibility assigned to the user's role. This overrides the privacy enforcement patches introduced since Redmine 5.1.4.
+  
 * **Protected**
   A project member cannot assign a user or group to watch an issue, and a watcher cannot have additional view permission over an issue, unless either: 
 

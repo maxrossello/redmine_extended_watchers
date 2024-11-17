@@ -18,18 +18,13 @@
 require_dependency 'principal'
 
 module ExtendedWatchersPrincipalPatch
-  
-  extend ActiveSupport::Concern
-  
-  included do
-    def assignable_watchers
-      return super if Setting.plugin_redmine_extended_watchers["policy"] == "default"
-      # omitted visible for we want to add any principal to grant visibility
-      return active.where(:type => ['User', 'Group'])
-    end
+  def assignable_watchers
+    return super if Setting.plugin_redmine_extended_watchers["policy"] != "extended"
+    # omitted visible for we want to add any principal to grant visibility
+    return active.where(:type => ['User', 'Group'])
   end
 end
 
 unless Principal.singleton_class.included_modules.include?(ExtendedWatchersPrincipalPatch)
-  Principal.singleton_class.send(:prepend, ExtendedWatchersPrincipalPatch)
+  Principal.singleton_class.prepend(ExtendedWatchersPrincipalPatch)
 end

@@ -50,5 +50,5 @@ module ExtendedWatchersApplicationControllerPatch
 end
 
 unless ApplicationController.included_modules.include?(ExtendedWatchersApplicationControllerPatch)
-  ApplicationController.send(:prepend, ExtendedWatchersApplicationControllerPatch)
+  ApplicationController.prepend(ExtendedWatchersApplicationControllerPatch)
 end

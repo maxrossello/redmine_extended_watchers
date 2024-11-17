@@ -211,14 +211,14 @@ end
 
 
 unless Issue.included_modules.include?(ExtendedWatchersIssuePatch::ExtendedWatchersIssueInstancePatch)
-    Issue.send(:prepend, ExtendedWatchersIssuePatch::ExtendedWatchersIssueInstancePatch)
+    Issue.prepend(ExtendedWatchersIssuePatch::ExtendedWatchersIssueInstancePatch)
 end
 
 unless Issue.singleton_class.included_modules.include?(ExtendedWatchersIssuePatch::ExtendedWatchersIssueClassPatch)
-  Issue.singleton_class.send(:prepend, ExtendedWatchersIssuePatch::ExtendedWatchersIssueClassPatch)
+  Issue.singleton_class.prepend(ExtendedWatchersIssuePatch::ExtendedWatchersIssueClassPatch)
 end
 
 unless IssueQuery.singleton_class.included_modules.include?(ExtendedWatchersIssuePatch::ExtendedWatchersIssueQueryClassPatch)
-  IssueQuery.singleton_class.send(:prepend, ExtendedWatchersIssuePatch::ExtendedWatchersIssueQueryClassPatch)
+  IssueQuery.singleton_class.prepend(ExtendedWatchersIssuePatch::ExtendedWatchersIssueQueryClassPatch)
 end
 

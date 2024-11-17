@@ -574,7 +574,7 @@ class ExtWatchWatchersControllerTest < Redmine::ControllerTest
     end
   end
   
-  def test_extended_autocomplete_for_user_should_return_visible_users_public
+  def test_extended_autocomplete_for_user_should_return_all_users_public
     Role.update_all :users_visibility => 'members_of_visible_projects'
 
     hidden = User.generate!(:lastname => 'autocomplete_hidden')
@@ -587,7 +587,7 @@ class ExtWatchWatchersControllerTest < Redmine::ControllerTest
       assert_response :success
 
       assert_include visible.name, response.body
-      assert_not_include hidden.name, response.body
+      assert_include hidden.name, response.body
     end
   end
 
@@ -626,7 +626,7 @@ class ExtWatchWatchersControllerTest < Redmine::ControllerTest
     end
   end
   
-  def test_extended_autocomplete_for_user_should_return_visible_users_private
+  def test_extended_autocomplete_for_user_should_return_all_users_private
     Role.update_all :users_visibility => 'members_of_visible_projects'
 
     hidden = User.generate!(:lastname => 'autocomplete_hidden')
@@ -639,7 +639,7 @@ class ExtWatchWatchersControllerTest < Redmine::ControllerTest
       assert_response :success
 
       assert_include visible.name, response.body
-      assert_not_include hidden.name, response.body
+      assert_include hidden.name, response.body
     end
   end
   

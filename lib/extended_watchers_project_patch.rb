@@ -29,5 +29,5 @@ module ExtendedWatchersProjectPatch
 end
 
 unless Project.singleton_class.included_modules.include?(ExtendedWatchersProjectPatch)
-   Project.singleton_class.send(:prepend, ExtendedWatchersProjectPatch)
+   Project.singleton_class.prepend(ExtendedWatchersProjectPatch)
 end

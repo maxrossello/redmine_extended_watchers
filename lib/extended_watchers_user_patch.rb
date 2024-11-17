@@ -40,5 +40,5 @@ module ExtendedWatchersUserPatch
 end
 
 unless User.included_modules.include?(ExtendedWatchersUserPatch)
-   User.send(:prepend, ExtendedWatchersUserPatch)
+   User.prepend(ExtendedWatchersUserPatch)
 end
