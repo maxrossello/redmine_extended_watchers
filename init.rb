@@ -30,10 +30,10 @@ Redmine::Plugin.register :redmine_extended_watchers do
   name 'Redmine Extended Watchers plugin'
   author 'Massimo Rossello'
   description 'Enables all users to be assigned as watchers of an issue and have limited access to it in the project'
-  version '5.1.4.1'
+  version '6.0.1'
   url 'https://github.com/maxrossello/redmine_extended_watchers.git'
   author_url 'https://github.com/maxrossello'
-  requires_redmine :version_or_higher => '5.1.4'
+  requires_redmine :version_or_higher => '6.0.1'
 
   # policy: default, extended, protected 
   settings :default => {'policy' => 'extended'}, :partial => 'settings/extwatch_settings'
