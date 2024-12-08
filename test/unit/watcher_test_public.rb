@@ -25,7 +25,6 @@ class WatcherTestExtendedWatchersPublicProject < ActiveSupport::TestCase
            :watchers
 
   def setup
-    byebug
     User.current = nil
     @user = User.find(2)
     @nonmember = User.find(4)

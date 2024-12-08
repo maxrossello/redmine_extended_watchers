@@ -4,8 +4,10 @@
 .buildpath
 Gemfile.lock
 config/
+coverage/
 db/
 files/
 log/
 tmp/
 public/
+themes/

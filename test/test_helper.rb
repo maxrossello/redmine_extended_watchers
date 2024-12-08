@@ -20,7 +20,7 @@
 
 if ENV["COVERAGE"]
   require 'simplecov'
-  require File.expand_path(File.dirname(__FILE__) + "/coverage/html_formatter")
+  require_relative 'coverage/html_formatter'
   SimpleCov.formatter = Redmine::Coverage::HtmlFormatter
   SimpleCov.start 'rails'
 end
