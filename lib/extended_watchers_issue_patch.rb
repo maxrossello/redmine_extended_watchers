@@ -111,7 +111,7 @@ module ExtendedWatchersIssuePatch
     
     def visible?(usr=nil)
       return true if Setting.plugin_redmine_extended_watchers["policy"] == "extended" && self.indirect_watcher_users.include?(usr || User.current)
-        
+      
       (usr || User.current).allowed_to?(:view_issues, self.project, {issue: true}) do |role, user|
         visible = if user.logged?
           case role.issues_visibility
@@ -153,7 +153,9 @@ module ExtendedWatchersIssuePatch
       return true unless respond_to?(:visible?)
       return true unless user.is_a?(User)
       
-      visible?(user)
+      return visible?(user) if Setting.plugin_redmine_extended_watchers["policy"] == "default"
+      
+      user.allowed_to?(:view_issues, self.project)
     end
     
     def watched_by?(user)

@@ -2,6 +2,7 @@
 .metadata/
 .project
 .buildpath
+.pydevproject
 Gemfile.lock
 config/
 coverage/

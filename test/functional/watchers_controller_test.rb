@@ -26,6 +26,15 @@ class ExtWatchWatchersControllerTest < Redmine::ControllerTest
   def setup
     User.current = nil
     Role.find(2).add_permission!(:add_issue_watchers)
+    role = Role.create!(:name => 'Watcher', :issues_visibility => 'own', :permissions => [:view_issues, :edit_issues, :add_notes])
+    # issue 6 is in private project
+    member = Member.new(:project => Issue.find(6).project, :user_id => 7, :role_ids => [role.id])
+    member.save!
+    #member.reload
+  end
+
+  def teardown
+    Issue.find(6).project.members.find_by(user_id: 7).role_ids = []
   end
 
   # addable_watcher_users are the first users listed with empty search field
@@ -244,6 +253,46 @@ class ExtWatchWatchersControllerTest < Redmine::ControllerTest
       assert_no_difference('Watcher.count') do
         post :watch, :params => {:object_type => 'issue', :object_id => '1'}, :xhr => true
         assert_response 403
+      end
+    end
+  end
+
+  
+  def test_default_watch_should_not_be_allowed_with_own_visibility_only
+    @request.session[:user_id] = 2
+    with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
+      assert_no_difference('Watcher.count') do
+        post :create, :params => {
+          :object_type => 'issue', :object_id => '6',
+          :watcher => {:user_id => '7'}
+        }, :xhr => true
+        assert_response :success
+      end
+    end
+  end
+  
+  def test_protected_watch_should_be_allowed_with_own_visibility_only
+    @request.session[:user_id] = 2
+    with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
+      assert_difference('Watcher.count') do
+        post :create, :params => {
+          :object_type => 'issue', :object_id => '6',
+          :watcher => {:user_id => '7'}
+        }, :xhr => true
+        assert_response :success
+      end
+    end
+  end
+  
+  def test_extended_watch_should_be_allowed_with_own_visibility_only
+    @request.session[:user_id] = 2
+    with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
+      assert_difference('Watcher.count') do
+        post :create, :params => {
+          :object_type => 'issue', :object_id => '6',
+          :watcher => {:user_id => '7'}
+        }, :xhr => true
+        assert_response :success
       end
     end
   end
