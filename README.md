@@ -42,26 +42,28 @@ In the plugin configuration page the administrator can select one out of three w
   ![watcher project view](screenshots/watcher_view.png)
   
   
-  Additional visibility applies to private issues too. It lasts until the issue is watched, and is removed thereafter.
+  Additional visibility applies to private issues too, but private notes still behave according to the *view private notes* setting. It lasts until the issue is watched, and it is removed thereafter.
   
   **Warning:** this mode is specifically crafted to grant visibility to *any* user in the system. Therefore, the list of *all* users becomes visible in the autocompletion form irrespective of the user visibility assigned to the user's role. This overrides the privacy enforcement patches introduced since Redmine 5.1.4.
+  Unless you clearly understand the implications of the extended mode, we suggest to use the **protected** mode.
   
 * **Protected**
   A project member cannot assign a user or group to watch an issue, and a watcher cannot have additional view permission over an issue, unless either: 
 
   * the candidate watcher is a project member with a role that has at least *issues created by or assigned to the user* permission in the project (i.e. *view issues*) or,
-  * the project is public, the candidate watcher has no role in the project, but the nonmember role has that permission
+  * the project is public, the candidate watcher has no role in the project, but the nonmember role or nonmembers group have that permission
 
   As per Redmine policies:
 
-  * the assigner must have *add watcher* permission; 
-  * the nonmember role is considered if and only if the project is public and the candidate watcher has no other role in the project
+  * the assigner must have *add watcher* permission;
+  * the nonmembers group settings are considered if and only if the project is public and the candidate watcher has no role in the project;
+  * the nonmember role is considered if and only if the project is public, no nonmembers group is configured and the candidate watcher has no role in the project;
   * the issue tracking module must be enabled in the project
   
   Watching an issue overtakes the visibility limitations of the user/group role(s) over the issue's tracker.
   
   As a consequence of watching under above conditions, the issue is always visible to the watcher and issue changes are notified via email according to the user/group's settings.
   
-  Additional visibility applies to private issues too. It lasts until the issue is watched, and is removed thereafter.
+  Additional visibility applies to private issues too, but private notes still behave according to the *view private notes* setting. It lasts until the issue is watched, and it is removed thereafter.
   
-  Note: a watcher user or group that looses view permissions because of role assignments still remains a watcher, but it will anyway have no visibility of the issue nor of the container project. However, it will regain additional permissions once it gains project access because of restored role permissions, unless the issue's watchers are pruned.
+  Note: a watcher user or group that looses issues view permissions because of role assignments still remains a watcher, but it will anyway have no visibility of the issue nor of the container project. However, it will regain additional permissions once it gains project access because of restored role permissions, unless the issue's watchers are pruned.

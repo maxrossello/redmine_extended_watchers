@@ -31,33 +31,60 @@ class ExtWatchIssuesControllerTest < Redmine::ControllerTest
   
   
   def test_default_watcher_public_issues_show
-    @project = Project.generate!(:name => "dummy", :is_public => true)
-    @project.add_default_member(User.find(2))
+    # project visibility also depends on visibility of other modules than issues, so generate new one
+    project = Project.generate!(:name => "dummy", :is_public => true)
+    project.add_default_member(User.find(2))
       
-    @issue = Issue.generate!(:project => @project)
-    @issue.add_watcher(User.find(2))
-    @issue.add_watcher(User.find(4))
+    issue = Issue.generate!(:project => project)
+    issue.add_watcher(User.find(2))
+    issue.add_watcher(User.find(4))
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
       @request.session[:user_id] = 2
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
       }
       assert_response :success
       @request.session[:user_id] = 4
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
       }
       assert_response :success
 
       Role.non_member.remove_permission!(:view_issues)
       @request.session[:user_id] = 2
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
       }
       assert_response :success
       @request.session[:user_id] = 4
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
+      }
+      assert_response 403
+      
+      # adding non members group
+      role = Role.generate!(permissions: [:view_issues, :view_watchers], issues_visibility: 'default')
+      Member.create!(:project => project, :principal => Group.non_member, :role_ids => [role.id])
+      @request.session[:user_id] = 2
+      get :show, :params => {
+        :id => issue.id
+      }
+      assert_response :success
+      @request.session[:user_id] = 4
+      get :show, :params => {
+        :id => issue.id
+      }
+      assert_response :success
+
+      role.remove_permission!(:view_issues)
+      @request.session[:user_id] = 2
+      get :show, :params => {
+        :id => issue.id
+      }
+      assert_response :success
+      @request.session[:user_id] = 4
+      get :show, :params => {
+        :id => issue.id
       }
       assert_response 403
     end
@@ -65,33 +92,59 @@ class ExtWatchIssuesControllerTest < Redmine::ControllerTest
   
   def test_protected_watcher_public_issues_show
     # project visibility also depends on visibility of other modules than issues, so generate new one
-    @project = Project.generate!(:name => "dummy", :is_public => true)
-    @project.add_default_member(User.find(2))
+    project = Project.generate!(:name => "dummy", :is_public => true)
+    project.add_default_member(User.find(2))
       
-    @issue = Issue.generate!(:project => @project)
-    @issue.add_watcher(User.find(2))
-    @issue.add_watcher(User.find(4))
+    issue = Issue.generate!(:project => project)
+    issue.add_watcher(User.find(2))
+    issue.add_watcher(User.find(4))
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
       @request.session[:user_id] = 2
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
       }
       assert_response :success
       @request.session[:user_id] = 4
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
       }
       assert_response :success
 
       Role.non_member.remove_permission!(:view_issues)
       @request.session[:user_id] = 2
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
       }
       assert_response :success
       @request.session[:user_id] = 4
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
+      }
+      assert_response 403
+      
+      # adding non members group, 'own' visibility is sufficient
+      role = Role.generate!(permissions: [:view_issues, :view_watchers], issues_visibility: 'own')
+      Member.create!(:project => project, :principal => Group.non_member, :role_ids => [role.id])
+      @request.session[:user_id] = 2
+      get :show, :params => {
+        :id => issue.id
+      }
+      assert_response :success
+      @request.session[:user_id] = 4
+      get :show, :params => {
+        :id => issue.id
+      }
+      assert_response :success
+
+      role.remove_permission!(:view_issues)
+      @request.session[:user_id] = 2
+      get :show, :params => {
+        :id => issue.id
+      }
+      assert_response :success
+      @request.session[:user_id] = 4
+      get :show, :params => {
+        :id => issue.id
       }
       assert_response 403
     end
@@ -99,33 +152,60 @@ class ExtWatchIssuesControllerTest < Redmine::ControllerTest
 
   def test_extended_watcher_public_issues_show
     # project visibility also depends on visibility of other modules than issues, so generate new one
-    @project = Project.generate!(:name => "dummy", :is_public => true)
-    @project.add_default_member(User.find(2))
+    project = Project.generate!(:name => "dummy", :is_public => true)
+    project.add_default_member(User.find(2))
       
-    @issue = Issue.generate!(:project => @project)
-    @issue.add_watcher(User.find(2))
-    @issue.add_watcher(User.find(4))
+    issue = Issue.generate!(:project => project)
+    issue.add_watcher(User.find(2))
+    issue.add_watcher(User.find(4))
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
       @request.session[:user_id] = 2
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
       }
       assert_response :success
       @request.session[:user_id] = 4
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
       }
       assert_response :success
 
       Role.non_member.remove_permission!(:view_issues)
       @request.session[:user_id] = 2
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
       }
       assert_response :success
       @request.session[:user_id] = 4
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
+      }
+      assert_response :success
+      
+      # adding non members group, 'own' visibility is sufficient
+      role = Role.generate!(permissions: [:view_issues, :view_watchers], issues_visibility: 'own')
+      Member.create!(:project => project, :principal => Group.non_member, :role_ids => [role.id])
+      @request.session[:user_id] = 2
+      get :show, :params => {
+        :id => issue.id
+      }
+      assert_response :success
+      @request.session[:user_id] = 4
+      get :show, :params => {
+        :id => issue.id
+      }
+      assert_response :success
+
+      # actually, even just watching is sufficient
+      role.remove_permission!(:view_issues)
+      @request.session[:user_id] = 2
+      get :show, :params => {
+        :id => issue.id
+      }
+      assert_response :success
+      @request.session[:user_id] = 4
+      get :show, :params => {
+        :id => issue.id
       }
       assert_response :success
     end
@@ -133,21 +213,21 @@ class ExtWatchIssuesControllerTest < Redmine::ControllerTest
 
   def test_default_watcher_private_issues_show
     # project visibility also depends on visibility of other modules than issues, so generate new one
-    @project = Project.generate!(:name => "dummy", :is_public => false)
-    @project.add_default_member(User.find(2))
+    project = Project.generate!(:name => "dummy", :is_public => false)
+    project.add_default_member(User.find(2))
       
-    @issue = Issue.generate!(:project => @project)
-    @issue.add_watcher(User.find(2))
-    @issue.add_watcher(User.find(4))
+    issue = Issue.generate!(:project => project)
+    issue.add_watcher(User.find(2))
+    issue.add_watcher(User.find(4))
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
       @request.session[:user_id] = 2
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
       }
       assert_response :success
       @request.session[:user_id] = 4
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
       }
       assert_response 403
 
@@ -155,12 +235,26 @@ class ExtWatchIssuesControllerTest < Redmine::ControllerTest
       Role.non_member.remove_permission!(:view_issues)
       @request.session[:user_id] = 2
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
       }
       assert_response :success
       @request.session[:user_id] = 4
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
+      }
+      assert_response 403
+      
+      # neither non members group
+      role = Role.generate!(permissions: [:view_issues, :view_watchers], issues_visibility: 'all')
+      Member.create!(:project => project, :principal => Group.non_member, :role_ids => [role.id])
+      @request.session[:user_id] = 2
+      get :show, :params => {
+        :id => issue.id
+      }
+      assert_response :success
+      @request.session[:user_id] = 4
+      get :show, :params => {
+        :id => issue.id
       }
       assert_response 403
     end
@@ -168,22 +262,22 @@ class ExtWatchIssuesControllerTest < Redmine::ControllerTest
 
   def test_protected_watcher_private_issues_show
     # project visibility also depends on visibility of other modules than issues, so generate new one
-    @project = Project.generate!(:name => "dummy", :is_public => false)
-    @project.add_default_member(User.find(2))
+    project = Project.generate!(:name => "dummy", :is_public => false)
+    project.add_default_member(User.find(2))
       
-    @issue = Issue.generate!(:project => @project)
-    @issue.add_watcher(User.find(2))
-    @issue.add_watcher(User.find(4))
+    issue = Issue.generate!(:project => project)
+    issue.add_watcher(User.find(2))
+    issue.add_watcher(User.find(4))
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
       # only watcher with view_issues permission can view project
       @request.session[:user_id] = 2
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
       }
       assert_response :success
       @request.session[:user_id] = 4
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
       }
       assert_response 403
 
@@ -191,12 +285,26 @@ class ExtWatchIssuesControllerTest < Redmine::ControllerTest
       Role.non_member.remove_permission!(:view_issues)
       @request.session[:user_id] = 2
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
       }
       assert_response :success
       @request.session[:user_id] = 4
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
+      }
+      assert_response 403
+      
+      # neither non members group
+      role = Role.generate!(permissions: [:view_issues, :view_watchers], issues_visibility: 'all')
+      Member.create!(:project => project, :principal => Group.non_member, :role_ids => [role.id])
+      @request.session[:user_id] = 2
+      get :show, :params => {
+        :id => issue.id
+      }
+      assert_response :success
+      @request.session[:user_id] = 4
+      get :show, :params => {
+        :id => issue.id
       }
       assert_response 403
     end
@@ -204,22 +312,22 @@ class ExtWatchIssuesControllerTest < Redmine::ControllerTest
 
   def test_extended_watcher_private_issues_show
     # project visibility also depends on visibility of other modules than issues, so generate new one
-    @project = Project.generate!(:name => "dummy", :is_public => false)
-    @project.add_default_member(User.find(2))
+    project = Project.generate!(:name => "dummy", :is_public => false)
+    project.add_default_member(User.find(2))
       
-    @issue = Issue.generate!(:project => @project)
-    @issue.add_watcher(User.find(2))
-    @issue.add_watcher(User.find(4))
+    issue = Issue.generate!(:project => project)
+    issue.add_watcher(User.find(2))
+    issue.add_watcher(User.find(4))
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
       # watching extends project visibility also to non member
       @request.session[:user_id] = 2
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
       }
       assert_response :success
       @request.session[:user_id] = 4
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
       }
       assert_response :success
 
@@ -227,12 +335,26 @@ class ExtWatchIssuesControllerTest < Redmine::ControllerTest
       Role.non_member.remove_permission!(:view_issues)
       @request.session[:user_id] = 2
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
       }
       assert_response :success
       @request.session[:user_id] = 4
       get :show, :params => {
-        :id => @issue.id
+        :id => issue.id
+      }
+      assert_response :success
+      
+      # neither non members group: still successful because of watching
+      role = Role.generate!(permissions: [:view_watchers], issues_visibility: 'own')
+      Member.create!(:project => project, :principal => Group.non_member, :role_ids => [role.id])
+      @request.session[:user_id] = 2
+      get :show, :params => {
+        :id => issue.id
+      }
+      assert_response :success
+      @request.session[:user_id] = 4
+      get :show, :params => {
+        :id => issue.id
       }
       assert_response :success
     end
@@ -240,13 +362,13 @@ class ExtWatchIssuesControllerTest < Redmine::ControllerTest
 
   
   def test_extended_watcher_private_project_issues_index_only_shows_issues_module
-    @project = Project.generate!(:name => "dummy", :is_public => false)
-    @issue = Issue.generate!(:project => @project)
-    @issue.add_watcher(User.find(2))
+    project = Project.generate!(:name => "dummy", :is_public => false)
+    issue = Issue.generate!(:project => project)
+    issue.add_watcher(User.find(2))
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
       @request.session[:user_id] = 2
       get :index, :params => {
-        :id => @project.id
+        :id => project.id
       }
       assert_response :success
       assert_select '.tabs ul li .issues', { text: I18n.t(:label_issue_plural) }

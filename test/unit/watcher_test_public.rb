@@ -76,9 +76,9 @@ class WatcherTestExtendedWatchersPublicProject < ActiveSupport::TestCase
   def test_default_addable_watcher_users_should_not_include_user_that_cannot_view_the_object
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
       issue = Issue.new(:project => Project.find(1), :is_private => true)
-      assert_nil issue.addable_watcher_users.detect {|user| !issue.visible?(user)}
+      assert_nil issue.addable_watcher_users.detect {|user| user.is_a?(User) && !issue.visible?(user)}
       Role.non_member.remove_permission!(:view_issues)
-      assert_nil issue.addable_watcher_users.detect {|user| !issue.visible?(user)}
+      assert_nil issue.addable_watcher_users.detect {|user| user.is_a?(User) && !issue.visible?(user)}
     end
   end
   
@@ -86,9 +86,9 @@ class WatcherTestExtendedWatchersPublicProject < ActiveSupport::TestCase
   def test_protected_addable_watcher_users_should_also_include_user_that_cannot_view_the_object
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
       issue = Issue.new(:project => Project.find(1), :is_private => true)
-      assert_not_nil issue.addable_watcher_users.detect {|user| !issue.visible?(user)}
+      assert_not_nil issue.addable_watcher_users.detect {|user| user.is_a?(User) && !issue.visible?(user)}
       Role.non_member.remove_permission!(:view_issues)
-      assert_not_nil issue.addable_watcher_users.detect {|user| !issue.visible?(user)}
+      assert_not_nil issue.addable_watcher_users.detect {|user| user.is_a?(User) && !issue.visible?(user)}
     end
   end
 
@@ -96,9 +96,9 @@ class WatcherTestExtendedWatchersPublicProject < ActiveSupport::TestCase
   def test_extended_addable_watcher_users_should_also_include_user_that_cannot_view_the_object
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
       issue = Issue.new(:project => Project.find(1), :is_private => true)
-      assert_not_nil issue.addable_watcher_users.detect {|user| !issue.visible?(user)}
+      assert_not_nil issue.addable_watcher_users.detect {|user| user.is_a?(User) && !issue.visible?(user)}
       Role.non_member.remove_permission!(:view_issues)
-      assert_not_nil issue.addable_watcher_users.detect {|user| !issue.visible?(user)}
+      assert_not_nil issue.addable_watcher_users.detect {|user| user.is_a?(User) && !issue.visible?(user)}
     end
   end
 
