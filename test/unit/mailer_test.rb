@@ -43,98 +43,129 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
   test "#default issue_add should not notify project members that are not allow to view the issue" do
     issue = Issue.find(1)
     user = User.find(3)
-    nonmemember = User.find(4)
-    Role.find(2).remove_permission!(:view_issues)
+    nonmember = User.find(4)
+    Role.find(2).remove_permission!(:view_issues) # role of user 3
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
       assert Mailer.deliver_issue_add(issue)
-      assert !last_email.to.include?(user.mail)
+      assert_not_include user.mail, recipients
       
       # even if user is watcher
       issue.add_watcher(user)
       user.reload
+      ActionMailer::Base.deliveries.clear
       assert Mailer.deliver_issue_add(issue)
-      assert !last_email.to.include?(user.mail)
+      assert_not_include user.mail, recipients
       
       # neither non members with issue view permission
-      assert !last_email.to.include?(nonmemember.mail)
+      assert_not_include nonmember.mail, recipients
 
       # unless they are watching
-      issue.add_watcher(nonmemember)
-      nonmemember.reload
+      issue.add_watcher(nonmember)
+      nonmember.reload
+      ActionMailer::Base.deliveries.clear
       assert Mailer.deliver_issue_add(issue)
-      assert last_email.to.include?(nonmemember.mail)
+      assert_include nonmember.mail, recipients
       
       # but not if nonmembers do not have view issue permission
       Role.non_member.remove_permission!(:view_issues)
-      nonmemember.reload
+      nonmember.reload
+      ActionMailer::Base.deliveries.clear
       assert Mailer.deliver_issue_add(issue)
-      assert !last_email.to.include?(nonmemember.mail)
+      assert_not_include nonmember.mail, recipients
+      
+      # nor with nonmember groups that has restricted view issue permission
+      role = Role.generate!(permissions: [:view_issues, :view_watchers], issues_visibility: 'own')
+      Member.create!(:project => issue.project, :principal => Group.non_member, :role_ids => [role.id])
+      nonmember.reload
+      issue.project.reload
+      ActionMailer::Base.deliveries.clear
+      assert Mailer.deliver_issue_add(issue)
+      assert_not_include nonmember.mail, recipients
+      
+      # unless issue visibility is at least default
+      role.update! issues_visibility: 'default'
+      nonmember.reload
+      issue.project.reload   # to reload memberships
+      ActionMailer::Base.deliveries.clear
+      assert Mailer.deliver_issue_add(issue)
+      assert_include nonmember.mail, recipients
     end
   end
 
   test "#protected issue_add should notify project members that are not allow to view the issue but watch" do
     issue = Issue.find(1)
     user = User.find(3)
-    nonmemember = User.find(4)
+    nonmember = User.find(4)
     Role.find(2).remove_permission!(:view_issues)
     assert Mailer.deliver_issue_add(issue)
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
       assert Mailer.deliver_issue_add(issue)
-      assert !last_email.to.include?(user.mail)
+      assert_not_include user.mail, recipients
       
       # even if member user is watcher, but without view issue permission
       issue.add_watcher(user)
       user.reload
       assert Mailer.deliver_issue_add(issue)
-      assert !last_email.to.include?(user.mail)
+      assert_not_include user.mail, recipients
       
       # neither non members with issue view permission
-      assert !last_email.to.include?(nonmemember.mail)
+      assert_not_include nonmember.mail, recipients
 
       # unless they are watching
-      issue.add_watcher(nonmemember)
-      nonmemember.reload
+      issue.add_watcher(nonmember)
+      nonmember.reload
       assert Mailer.deliver_issue_add(issue)
-      assert last_email.to.include?(nonmemember.mail)
+      assert_include nonmember.mail, recipients
       
       # but not if nonmembers do not have view issue permission
       Role.non_member.remove_permission!(:view_issues)
-      nonmemember.reload
+      nonmember.reload
+      issue.project.reload
+      ActionMailer::Base.deliveries.clear
       assert Mailer.deliver_issue_add(issue)
-      assert !last_email.to.include?(nonmemember.mail)
+      assert_not_include nonmember.mail, recipients
+
+      # unless with nonmember groups that has at least own view issue permission
+      role = Role.generate!(permissions: [:view_issues, :view_watchers], issues_visibility: 'own')
+      Member.create!(:project => issue.project, :principal => Group.non_member, :role_ids => [role.id])
+      nonmember.reload
+      issue.project.reload
+      ActionMailer::Base.deliveries.clear
+      assert Mailer.deliver_issue_add(issue)
+      assert_include nonmember.mail, recipients
     end
   end
 
   test "#extended issue_add should notify project members that are not allow to view the issue but watch" do
     issue = Issue.find(1)
     user = User.find(3)
-    nonmemember = User.find(4)
+    nonmember = User.find(4)
     Role.find(2).remove_permission!(:view_issues)
     assert Mailer.deliver_issue_add(issue)
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
       assert Mailer.deliver_issue_add(issue)
-      assert !last_email.to.include?(user.mail)
+      assert_not_include user.mail, recipients
       
       # unless user is watcher
       issue.add_watcher(user)
       user.reload
       assert Mailer.deliver_issue_add(issue)
-      assert last_email.to.include?(user.mail)
+      assert_include user.mail, recipients
       
       # not for non members with issue view permission
-      assert !last_email.to.include?(nonmemember.mail)
+      assert_not_include nonmember.mail, recipients
 
       # unless they are watching
-      issue.add_watcher(nonmemember)
-      nonmemember.reload
+      issue.add_watcher(nonmember)
+      nonmember.reload
       assert Mailer.deliver_issue_add(issue)
-      assert last_email.to.include?(nonmemember.mail)
+      assert_include nonmember.mail, recipients
       
       # even if nonmembers do not have view issue permission
       Role.non_member.remove_permission!(:view_issues)
-      nonmemember.reload
+      nonmember.reload
       assert Mailer.deliver_issue_add(issue)
-      assert last_email.to.include?(nonmemember.mail)
+      assert_include nonmember.mail, recipients
     end
   end
 
@@ -151,7 +182,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
       Watcher.create!(:watchable => issue, :user => user)
       assert Mailer.deliver_issue_add(issue)
-      assert last_email.to.include?(user.mail)
+      assert_include user.mail, recipients
     end
   end
 
@@ -167,7 +198,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
       Watcher.create!(:watchable => issue, :user => user)
       assert Mailer.deliver_issue_add(issue)
-      assert last_email.to.include?(user.mail)
+      assert_include user.mail, recipients
     end
   end
 
@@ -183,7 +214,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
       Watcher.create!(:watchable => issue, :user => user)
       assert Mailer.deliver_issue_add(issue)
-      assert last_email.to.include?(user.mail)
+      assert_include user.mail, recipients
     end
   end
 
@@ -195,7 +226,7 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
     Role.non_member.remove_permission!(:view_issues)
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
       assert Mailer.deliver_issue_add(issue)
-      assert !last_email.to.include?(user.mail)
+      assert_not_include user.mail, recipients
     end
   end
 
@@ -207,11 +238,11 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
       # the protected mode requires view issue permission to extend watchers permissions
       assert Mailer.deliver_issue_add(issue)
-      assert !last_email.to.include?(user.mail)
+      assert_not_include user.mail, recipients
     end
   end
 
-  test "#extended issue_add should not notify watchers not allowed to view the issue" do
+  test "#extended issue_add should notify watchers not allowed to view the issue" do
     issue = Issue.find(1)
     user = User.find(9)
     Watcher.create!(:watchable => issue, :user => user)
@@ -219,13 +250,15 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
       # the plugin provides full watching features, including notifications, also to watchers with no membership
       assert Mailer.deliver_issue_add(issue)
-      assert last_email.to.include?(user.mail)
+      assert_include user.mail, recipients
     end
   end
 
   
-  def test_issue_edit_should_send_private_notes_to_watchers_with_permission_only
-    Issue.find(1).set_watcher(User.find_by_login('someone'))
+  def test_default_issue_edit_should_send_private_notes_to_watchers_with_permission_only
+    issue = Issue.find(1)
+    nonmember = User.find_by_login('someone')
+    issue.set_watcher(nonmember)
     journal = Journal.find(1)
     journal.private_notes = true
     journal.save!
@@ -238,7 +271,44 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
       Role.non_member.remove_permission! :view_private_notes
       Mailer.deliver_issue_edit(journal)
       assert_not_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.to.sort
+
+      # nor with nonmember group that has restricted view issue permission
+      role = Role.generate!(permissions: [:view_issues, :view_private_notes, :view_watchers], issues_visibility: 'own')
+      Member.create!(:project => issue.project, :principal => Group.non_member, :role_ids => [role.id])
+      nonmember.reload
+      issue.project.reload
+      journal.reload
+      ActionMailer::Base.deliveries.clear
+      Mailer.deliver_issue_edit(journal)
+      assert_not_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.to.sort
+      
+      # unless issue visibility is at least default
+      role.update! issues_visibility: 'default'
+      nonmember.reload
+      issue.reload
+      journal.reload
+      ActionMailer::Base.deliveries.clear
+      Mailer.deliver_issue_edit(journal)
+      assert_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.to.sort
+      
+      # but not without :view_private_notes permission
+      role.remove_permission!(:view_private_notes)
+      nonmember.reload
+      issue.reload
+      journal.reload
+      ActionMailer::Base.deliveries.clear
+      Mailer.deliver_issue_edit(journal)
+      assert_not_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.to.sort
     end
+  end
+
+  def test_protected_issue_edit_should_send_private_notes_to_watchers_with_permission_only
+    issue = Issue.find(1)
+    nonmember = User.find_by_login('someone')
+    issue.set_watcher(nonmember)
+    journal = Journal.find(1)
+    journal.private_notes = true
+    journal.save!
 
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'protected' } do
       Role.non_member.add_permission! :view_private_notes
@@ -248,7 +318,35 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
       Role.non_member.remove_permission! :view_private_notes
       Mailer.deliver_issue_edit(journal)
       assert_not_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.to.sort
+
+      # unless with nonmember group that has at least own view issue permission
+      role = Role.generate!(permissions: [:view_issues, :view_private_notes, :view_watchers], issues_visibility: 'own')
+      Member.create!(:project => issue.project, :principal => Group.non_member, :role_ids => [role.id])
+      nonmember.reload
+      issue.project.reload
+      journal.reload
+      ActionMailer::Base.deliveries.clear
+      Mailer.deliver_issue_edit(journal)
+      assert_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.to.sort
+      
+      # but not without :view_private_notes permission
+      role.remove_permission!(:view_private_notes)
+      nonmember.reload
+      issue.reload
+      journal.reload
+      ActionMailer::Base.deliveries.clear
+      Mailer.deliver_issue_edit(journal)
+      assert_not_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.to.sort
     end
+  end
+
+  def test_extended_issue_edit_should_send_private_notes_to_watchers_with_permission_only
+    issue = Issue.find(1)
+    nonmember = User.find_by_login('someone')
+    issue.set_watcher(nonmember)
+    journal = Journal.find(1)
+    journal.private_notes = true
+    journal.save!
 
     with_settings :plugin_redmine_extended_watchers => { 'policy' => 'extended' } do
       Role.non_member.add_permission! :view_private_notes
@@ -256,6 +354,25 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
       assert_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.to.sort
 
       Role.non_member.remove_permission! :view_private_notes
+      Mailer.deliver_issue_edit(journal)
+      assert_not_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.to.sort
+
+      # unless with nonmember group that has :view_private_notes permission
+      role = Role.generate!(permissions: [:view_issues, :view_private_notes, :view_watchers], issues_visibility: 'own')
+      Member.create!(:project => issue.project, :principal => Group.non_member, :role_ids => [role.id])
+      nonmember.reload
+      issue.project.reload
+      journal.reload
+      ActionMailer::Base.deliveries.clear
+      Mailer.deliver_issue_edit(journal)
+      assert_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.to.sort
+      
+      # but not without :view_private_notes permission
+      role.remove_permission!(:view_private_notes)
+      nonmember.reload
+      issue.reload
+      journal.reload
+      ActionMailer::Base.deliveries.clear
       Mailer.deliver_issue_edit(journal)
       assert_not_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.to.sort
     end
@@ -404,6 +521,11 @@ class MailerTestExtendedWatchers < ActiveSupport::TestCase
   
   
   private
+
+  # Returns an array of email addresses to which emails were sent
+  def recipients
+    ActionMailer::Base.deliveries.map(&:to).flatten.sort
+  end
 
   def last_email
     mail = ActionMailer::Base.deliveries.last

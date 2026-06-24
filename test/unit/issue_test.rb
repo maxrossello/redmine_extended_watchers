@@ -990,7 +990,7 @@ class IssueTestExtendedWatchers < ActiveSupport::TestCase
     end
   end
 
-  def test_extended_watcher_recipients_should_not_include_users_that_cannot_view_the_issue
+  def test_extended_watcher_recipients_should_include_users_that_cannot_view_the_issue
     user = User.find(3)
     issue = Issue.find(9)
     Watcher.create!(:user => user, :watchable => issue)
